@@ -39,6 +39,7 @@ if (surface_exists(panel_surface) && surface_set_target(panel_surface))
         case TitleMenuPage.Pause: heading = "일시정지"; break;
         case TitleMenuPage.ExitConfirm: heading = "나가기"; break;
         case TitleMenuPage.SaveName: heading = "저장 이름"; break;
+        case TitleMenuPage.DeleteSave: heading = "저장 삭제"; break;
         default: heading = "불러오기"; break;
     }
     draw_text_transformed(212, 32, heading,
@@ -131,6 +132,29 @@ if (surface_exists(panel_surface) && surface_set_target(panel_surface))
         var label = overwrite_name == "" ? "저장하고 나가기" : "덮어쓰기";
         draw_control(save_submit_bounds, label, overwrite_name != "");
     }
+    else if (menu_page == TitleMenuPage.DeleteSave)
+    {
+        draw_set_color(parchment);
+        draw_text(212, 75, "이 저장을 삭제할까요?");
+
+        var confirm_name = delete_entry.name;
+        if (string_width(confirm_name) > 360)
+        {
+            confirm_name = string_insert("\n", confirm_name, (string_length(confirm_name) div 2) + 1);
+        }
+        draw_set_color(gold);
+        draw_set_valign(fa_top);
+        draw_text(212, 103, confirm_name);
+        draw_set_valign(fa_middle);
+
+        draw_control(delete_cancel_bounds, "취소", false);
+        draw_control(delete_submit_bounds, "삭제", false);
+        if (menu_error != "")
+        {
+            draw_set_color(parchment);
+            draw_text(212, 221, menu_error);
+        }
+    }
     else if (array_length(load_entries) > 0)
     {
         for (var i = 0; i < load_page_size; i++)
@@ -140,13 +164,15 @@ if (surface_exists(panel_surface) && surface_set_target(panel_surface))
             var entry = load_entries[index];
             var bounds = load_row_bounds(i);
             draw_control(bounds, "", false);
+            draw_control(load_delete_bounds(i), "삭제", false);
 
             draw_set_color(parchment);
             draw_set_halign(fa_left);
             var display_name = entry.name;
-            if (string_width(display_name) > 333)
+            var name_width = bounds[2] - 57;
+            if (string_width(display_name) > name_width)
             {
-                while (string_width(display_name + "...") > 333)
+                while (string_width(display_name + "...") > name_width)
                 {
                     display_name = string_delete(display_name, string_length(display_name), 1);
                 }
@@ -175,7 +201,8 @@ if (surface_exists(panel_surface) && surface_set_target(panel_surface))
         draw_text(212, 123 + panel_text_offset_y, menu_error);
     }
 
-    if (menu_page != TitleMenuPage.Pause) draw_control(back_bounds, "뒤로", false);
+    if (menu_page != TitleMenuPage.Pause && menu_page != TitleMenuPage.DeleteSave)
+        draw_control(back_bounds, "뒤로", false);
     surface_reset_target();
 }
 

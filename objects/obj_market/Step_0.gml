@@ -1,7 +1,8 @@
 if (market_input_blocked()) exit;
 
 var click = mouse_check_button_pressed(mb_left);
-if (keyboard_check_pressed(ord("F")) || (click && market_hit(market_leave_bounds)))
+if (keyboard_check_pressed(vk_escape) || keyboard_check_pressed(ord("F"))
+    || (click && market_hit(market_leave_bounds)))
 {
     var destination = rm_main;
     if (variable_global_exists("windmill_return") && is_struct(global.windmill_return))

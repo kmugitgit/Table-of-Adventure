@@ -1,14 +1,15 @@
 var click = mouse_check_button_pressed(mb_left);
 var escape_pressed = keyboard_check_pressed(vk_escape);
+var pause_pressed = escape_pressed && room != rm_market;
 var in_title = room == rm_title;
-gameplay_input_blocked = !in_title && (menu_page != TitleMenuPage.Playing || escape_pressed);
+gameplay_input_blocked = !in_title && (menu_page != TitleMenuPage.Playing || pause_pressed);
 
 switch (menu_page)
 {
     case TitleMenuPage.Playing:
-        if (escape_pressed)
+        if (pause_pressed)
         {
-            with (obj_main_chr_girl) inventory_open = false;
+            with (obj_main_chr_girl) inventory_close();
             menu_page = TitleMenuPage.Pause;
         }
         else play_time_ms += delta_time / 1000;
@@ -40,7 +41,7 @@ switch (menu_page)
             save_name = "";
             overwrite_name = "";
             menu_error = "";
-            keyboard_string = "";
+            begin_save_name_input();
             menu_page = TitleMenuPage.SaveName;
         }
         else if (click && over_control(exit_discard_bounds))
@@ -52,7 +53,7 @@ switch (menu_page)
     case TitleMenuPage.SaveName:
         if (escape_pressed || (click && over_control(back_bounds)))
         {
-            keyboard_string = "";
+            end_save_name_input();
             menu_error = "";
             menu_page = TitleMenuPage.ExitConfirm;
             exit;
@@ -64,7 +65,7 @@ switch (menu_page)
             entered += clipboard_get_text();
         }
         entered = clean_save_input(entered);
-        keyboard_string = entered;
+        if (entered != keyboard_string) keyboard_string = entered;
         if (entered != save_name)
         {
             save_name = entered;
@@ -90,12 +91,35 @@ switch (menu_page)
             }
             if (write_progress(name_to_save, files, previous))
             {
-                keyboard_string = "";
+                end_save_name_input();
                 return_to_title();
             }
             else
             {
                 menu_error = "저장하지 못했습니다. 다시 시도해 주세요.";
+            }
+        }
+        exit;
+
+    case TitleMenuPage.DeleteSave:
+        if (escape_pressed || (click && over_control(delete_cancel_bounds)))
+        {
+            delete_entry = undefined;
+            menu_page = TitleMenuPage.Load;
+        }
+        else if (click && over_control(delete_submit_bounds))
+        {
+            if (delete_progress(delete_entry))
+            {
+                var previous_page = load_page;
+                delete_entry = undefined;
+                refresh_load_entries();
+                load_page = min(previous_page, load_last_page());
+                menu_page = TitleMenuPage.Load;
+            }
+            else
+            {
+                menu_error = "저장을 삭제하지 못했습니다.";
             }
         }
         exit;
@@ -126,6 +150,13 @@ switch (menu_page)
             {
                 var index = load_page * load_page_size + i;
                 if (index >= array_length(load_entries)) break;
+                if (over_control(load_delete_bounds(i)))
+                {
+                    delete_entry = load_entries[index];
+                    menu_error = "";
+                    menu_page = TitleMenuPage.DeleteSave;
+                    break;
+                }
                 if (over_control(load_row_bounds(i)))
                 {
                     pending_load = load_entries[index].data;

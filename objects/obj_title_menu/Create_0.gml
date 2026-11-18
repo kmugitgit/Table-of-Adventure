@@ -1,4 +1,4 @@
-enum TitleMenuPage { Title, Settings, Load, Playing, Pause, ExitConfirm, SaveName }
+enum TitleMenuPage { Title, Settings, Load, Playing, Pause, ExitConfirm, SaveName, DeleteSave }
 enum TitleMenuButton { New, Load, Settings, Exit, Count }
 enum SettingsSlider { Effects, Music, InterfaceSize }
 
@@ -23,11 +23,13 @@ menu_error = "";
 legacy_save_files = ["progress_a.json", "progress_b.json"];
 named_save_prefix = "progress_named_";
 save_name_limit = 24;
+restore_fullscreen_after_save_name = false;
 save_name = "";
 overwrite_name = "";
 load_entries = [];
 load_page = 0;
 load_page_size = 4;
+delete_entry = undefined;
 if (!variable_global_exists("windmill_return")) global.windmill_return = undefined;
 if (!variable_global_exists("player_gold")) global.player_gold = 0;
 hovered_button = -1;
@@ -54,6 +56,7 @@ for (var i = 0; i < array_length(volume_groups); i++)
 {
     audio_group_set_gain(volume_groups[i], volumes[i], 0);
 }
+if (os_type == os_windows) window_enable_borderless_fullscreen(true);
 if (window_get_fullscreen() != start_fullscreen)
 {
     window_set_fullscreen(start_fullscreen);
@@ -113,11 +116,19 @@ save_name_bounds = [33, 86, 391, 124];
 save_submit_bounds = [111, 165, 313, 201];
 load_previous_bounds = [33, 216, 129, 242];
 load_next_bounds = [295, 216, 391, 242];
+delete_cancel_bounds = [67, 162, 197, 198];
+delete_submit_bounds = [227, 162, 357, 198];
 
 load_row_bounds = function(_row)
 {
     var top = 52 + _row * 39;
-    return [33, top, 391, top + 34];
+    return [33, top, 313, top + 34];
+};
+
+load_delete_bounds = function(_row)
+{
+    var bounds = load_row_bounds(_row);
+    return [bounds[2] + 9, bounds[1], 391, bounds[3]];
 };
 
 load_last_page = function()
@@ -256,6 +267,30 @@ latest_progress = function(_files, _version)
     return latest;
 };
 
+delete_progress = function(_entry)
+{
+    var version = _entry.data.version;
+    var files = version == 1 ? legacy_save_files : named_save_files(save_name_key(_entry.name));
+    var latest = latest_progress(files, version);
+    // Remove the older copy first so it cannot reappear as the latest save.
+    var first = is_undefined(latest) ? 0 : 1 - latest.slot;
+    try
+    {
+        for (var i = 0; i < array_length(files); i++)
+        {
+            var filename = files[(first + i) mod array_length(files)];
+            if (!file_exists(filename)) continue;
+            file_delete(filename);
+            if (file_exists(filename)) return false;
+        }
+    }
+    catch (_error)
+    {
+        return false;
+    }
+    return true;
+};
+
 refresh_load_entries = function()
 {
     load_entries = [];
@@ -297,6 +332,24 @@ refresh_load_entries = function()
     array_sort(load_entries, function(_a, _b) { return sign(_b.saved_at - _a.saved_at); });
     saw_file = saw_file || file_exists(legacy_save_files[0]) || file_exists(legacy_save_files[1]);
     menu_error = saw_file ? "저장 파일을 읽을 수 없습니다." : "저장된 게임이 없습니다.";
+};
+
+begin_save_name_input = function()
+{
+    // The Windows runtime leaves fullscreen when an IME starts composing.
+    restore_fullscreen_after_save_name = os_type == os_windows && window_get_fullscreen()
+        && !window_get_borderless_fullscreen();
+    if (restore_fullscreen_after_save_name) window_set_fullscreen(false);
+    keyboard_string = "";
+};
+
+end_save_name_input = function()
+{
+    keyboard_string = "";
+    if (!restore_fullscreen_after_save_name) return;
+
+    restore_fullscreen_after_save_name = false;
+    window_set_fullscreen(true);
 };
 
 clean_save_input = function(_input)

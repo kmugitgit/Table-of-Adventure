@@ -5,12 +5,17 @@ if (room == rm_market || (instance_exists(obj_title_menu) && obj_title_menu.game
     exit;
 }
 
-if (keyboard_check_pressed(ord("I"))) inventory_open = !inventory_open;
+if (keyboard_check_pressed(vk_tab))
+{
+    if (inventory_open) inventory_close();
+    else inventory_open = true;
+}
 
 var wheel_direction = mouse_wheel_down() - mouse_wheel_up();
 if (wheel_direction != 0)
 {
-    inventory_selected_slot = (inventory_selected_slot + wheel_direction + inventory_columns) mod inventory_columns;
+    var slot_count = inventory_columns * (inventory_open ? inventory_rows : 1);
+    inventory_selected_slot = (inventory_selected_slot + wheel_direction + slot_count) mod slot_count;
 }
 for (var slot_index = 0; slot_index < inventory_columns; slot_index++)
 {
@@ -23,6 +28,35 @@ for (var slot_index = 0; slot_index < inventory_columns; slot_index++)
 
 if (inventory_open)
 {
+    var direction_x = keyboard_check_pressed(vk_right) - keyboard_check_pressed(vk_left);
+    var direction_y = keyboard_check_pressed(vk_down) - keyboard_check_pressed(vk_up);
+    var selected_row = inventory_selected_slot div inventory_columns;
+    var selected_column = inventory_selected_slot mod inventory_columns;
+    selected_row = clamp(selected_row + direction_y, 0, inventory_rows - 1);
+    selected_column = clamp(selected_column + direction_x, 0, inventory_columns - 1);
+    inventory_selected_slot = selected_row * inventory_columns + selected_column;
+
+    if (mouse_check_button_pressed(mb_left))
+    {
+        var layout = inventory_layout();
+        var mouse_in_grid_x = (device_mouse_x_to_gui(0) - layout.x) / layout.scale - inventory_padding;
+        var mouse_in_panel_y = (device_mouse_y_to_gui(0) - layout.y) / layout.scale;
+        var column = floor(mouse_in_grid_x / inventory_slot_step);
+        if (column >= 0 && column < inventory_columns
+            && mouse_in_grid_x - column * inventory_slot_step < inventory_slot_size)
+        {
+            for (var row = 0; row < layout.rows; row++)
+            {
+                var top = inventory_row_top(row, layout.first_top);
+                if (mouse_in_panel_y >= top && mouse_in_panel_y < top + inventory_slot_size)
+                {
+                    inventory_selected_slot = row * inventory_columns + column;
+                    break;
+                }
+            }
+        }
+    }
+
     walk_phase = 0;
     image_index = idle_frames[facing];
     exit;

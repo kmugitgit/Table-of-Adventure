@@ -39,7 +39,7 @@ var wallet_label = string(global.player_gold) + " G";
 draw_text((market_wallet_bounds[0] + market_wallet_bounds[2]) * 0.5,
     (market_wallet_bounds[1] + market_wallet_bounds[3]) * 0.5 + 2,
     market_fit_text(wallet_label, market_wallet_bounds[2] - market_wallet_bounds[0] - 12));
-market_button(market_leave_bounds, "나가기 [F]", false, true);
+market_button(market_leave_bounds, "나가기 [Esc]", false, true);
 
 var items = market_catalog[market_category];
 for (var row = 0; row < market_rows_per_page; row++)

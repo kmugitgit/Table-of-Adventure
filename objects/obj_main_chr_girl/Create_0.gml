@@ -4,9 +4,9 @@ enum HeroFacing { Down, Up, Right, Left }
 walk_start_frames = [1, 7, 13, 19];
 idle_frames = [0, 7, 13, 19];
 walk_frame_count = 6;
-walk_frames_per_step = 8 / game_get_speed(gamespeed_fps);
+walk_frames_per_step = 6 / game_get_speed(gamespeed_fps);
 walk_phase = 0;
-move_speed = 150 / game_get_speed(gamespeed_fps);
+move_speed = 70 / game_get_speed(gamespeed_fps);
 facing = HeroFacing.Down;
 
 image_speed = 0;
@@ -30,6 +30,45 @@ inventory_columns = 9;
 inventory_rows = 3;
 inventory_selected_slot = 0;
 inventory_surface = -1;
+inventory_slot_size = 42;
+inventory_slot_step = 46;
+inventory_padding = 12;
+inventory_row_gap = 10;
+inventory_grid_top = 47;
+
+inventory_close = function()
+{
+    inventory_open = false;
+    inventory_selected_slot = inventory_selected_slot mod inventory_columns;
+};
+
+inventory_row_top = function(_row, _first_top)
+{
+    return _first_top + _row * inventory_slot_step + (_row > 0 ? inventory_row_gap : 0);
+};
+
+inventory_layout = function()
+{
+    var gui_width = display_get_gui_width();
+    var gui_height = display_get_gui_height();
+    var scale = min(gui_width / 960, gui_height / 540) * inventory_scale;
+    var rows = inventory_open ? inventory_rows : 1;
+    var first_top = inventory_open ? inventory_grid_top : inventory_padding;
+    var width = 2 * inventory_padding + (inventory_columns - 1) * inventory_slot_step + inventory_slot_size;
+    var height = inventory_row_top(rows - 1, first_top) + inventory_slot_size + inventory_padding;
+    var surface_height = inventory_row_top(inventory_rows - 1, inventory_grid_top)
+        + inventory_slot_size + inventory_padding;
+    return {
+        x: round((gui_width - width * scale) * 0.5),
+        y: round(gui_height - height * scale),
+        scale: scale,
+        width: width,
+        height: height,
+        surface_height: surface_height,
+        rows: rows,
+        first_top: first_top
+    };
+};
 
 ini_open("settings.ini");
 var old_ui_size = clamp(round(ini_read_real("display", "ui_size", 1)), 0, 2);
