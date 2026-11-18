@@ -46,7 +46,6 @@
     {"id":{"name":"spr_windmill_body","path":"sprites/spr_windmill_body/spr_windmill_body.yy",},},
     {"id":{"name":"spr_windmill_rotor","path":"sprites/spr_windmill_rotor/spr_windmill_rotor.yy",},},
     {"id":{"name":"ts_all","path":"tilesets/ts_all/ts_all.yy",},},
-    {"id":{"name":"ts_spring_terrain","path":"tilesets/ts_spring_terrain/ts_spring_terrain.yy",},},
   ],
   "resourceType":"GMProject",
   "resourceVersion":"2.0",
