@@ -31,6 +31,7 @@ market_green_light = make_color_rgb(111, 114, 66);
 
 market_tabs = ["씨앗", "농기구", "업그레이드"];
 market_tab_bounds = [[30, 14, 130, 46], [138, 14, 238, 46], [246, 14, 366, 46]];
+market_wallet_bounds = [380, 14, 516, 40];
 market_leave_bounds = [526, 14, 611, 40];
 market_preview_bounds = [414, 71, 604, 203];
 market_desc_bounds = [414, 213, 604, 273];
@@ -82,8 +83,14 @@ market_top = function()
 {
     return (display_get_gui_height() - market_height * market_scale()) * 0.5;
 };
+market_input_blocked = function()
+{
+    return instance_exists(obj_title_menu) && obj_title_menu.gameplay_input_blocked;
+};
+
 market_hit = function(_bounds)
 {
+    if (market_input_blocked()) return false;
     var scale = market_scale();
     var pointer_x = (device_mouse_x_to_gui(0) - market_left()) / scale;
     var pointer_y = (device_mouse_y_to_gui(0) - market_top()) / scale;
@@ -117,13 +124,13 @@ market_set_page = function(_page)
 {
     var next = clamp(_page, 0, market_last_page());
     if (next == market_page) return;
-    market_page = next;
     market_select(next * market_rows_per_page);
 };
 
 market_select = function(_index)
 {
     market_selected = _index;
+    market_page = floor(_index / market_rows_per_page);
     market_desc_scroll = 0;
     market_desc_scroll_max = 0;
 };

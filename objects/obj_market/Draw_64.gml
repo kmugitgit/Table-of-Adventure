@@ -32,6 +32,13 @@ for (var i = 0; i < array_length(market_tabs); i++)
 {
     market_button(market_tab_bounds[i], market_tabs[i], market_category == i, true);
 }
+market_panel(market_wallet_bounds, market_wood_dark, market_bronze);
+draw_set_halign(fa_center);
+draw_set_color(market_gold);
+var wallet_label = string(global.player_gold) + " G";
+draw_text((market_wallet_bounds[0] + market_wallet_bounds[2]) * 0.5,
+    (market_wallet_bounds[1] + market_wallet_bounds[3]) * 0.5 + 2,
+    market_fit_text(wallet_label, market_wallet_bounds[2] - market_wallet_bounds[0] - 12));
 market_button(market_leave_bounds, "나가기 [F]", false, true);
 
 var items = market_catalog[market_category];

@@ -29,6 +29,7 @@ load_entries = [];
 load_page = 0;
 load_page_size = 4;
 if (!variable_global_exists("windmill_return")) global.windmill_return = undefined;
+if (!variable_global_exists("player_gold")) global.player_gold = 0;
 hovered_button = -1;
 dragged_slider = -1;
 
@@ -327,7 +328,7 @@ write_progress = function(_name, _files, _previous)
     var data = {
         version: 2, revision: revision, name: _name, saved_at: date_current_datetime(), room_name: room_get_name(room),
         x: player.x, y: player.y, facing: player.facing,
-        selected_slot: player.inventory_selected_slot, entrance: entrance
+        selected_slot: player.inventory_selected_slot, gold: global.player_gold, entrance: entrance
     };
 
     // Write to the other slot so a failed write leaves the last valid save intact.
@@ -349,7 +350,8 @@ write_progress = function(_name, _files, _previous)
     }
 
     var written = read_progress_file(filename);
-    return is_struct(written) && written.revision == revision && written.name == _name;
+    return is_struct(written) && written.revision == revision && written.name == _name
+        && variable_struct_get(written, "gold") == data.gold;
 };
 
 return_to_title = function()

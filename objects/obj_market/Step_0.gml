@@ -1,4 +1,4 @@
-if (instance_exists(obj_title_menu) && obj_title_menu.gameplay_input_blocked) exit;
+if (market_input_blocked()) exit;
 
 var click = mouse_check_button_pressed(mb_left);
 if (keyboard_check_pressed(ord("F")) || (click && market_hit(market_leave_bounds)))
@@ -21,12 +21,20 @@ if (click)
             if (market_category != i)
             {
                 market_category = i;
-                market_page = 0;
                 market_select(0);
             }
             exit;
         }
     }
+}
+
+var items = market_catalog[market_category];
+var row_direction = keyboard_check_pressed(vk_down) - keyboard_check_pressed(vk_up);
+if (row_direction != 0 && array_length(items) > 0)
+{
+    var next_index = clamp(market_selected + row_direction, 0, array_length(items) - 1);
+    if (next_index != market_selected) market_select(next_index);
+    exit;
 }
 
 var visible_pages = market_visible_page_count();
@@ -58,7 +66,6 @@ for (var i = 0; i < visible_pages; i++)
     }
 }
 
-var items = market_catalog[market_category];
 for (var row = 0; row < market_rows_per_page; row++)
 {
     var index = market_page * market_rows_per_page + row;

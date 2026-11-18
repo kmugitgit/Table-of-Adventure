@@ -7,7 +7,11 @@ if (room == rm_market || (instance_exists(obj_title_menu) && obj_title_menu.game
 
 if (keyboard_check_pressed(ord("I"))) inventory_open = !inventory_open;
 
-
+var wheel_direction = mouse_wheel_down() - mouse_wheel_up();
+if (wheel_direction != 0)
+{
+    inventory_selected_slot = (inventory_selected_slot + wheel_direction + inventory_columns) mod inventory_columns;
+}
 for (var slot_index = 0; slot_index < inventory_columns; slot_index++)
 {
     if (keyboard_check_pressed(ord("1") + slot_index))
