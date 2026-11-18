@@ -17,8 +17,8 @@
   "out_tilehborder":2,
   "out_tilevborder":2,
   "parent":{
-    "name":"Table of adventure",
-    "path":"Table of adventure.yyp",
+    "name":"TileSets",
+    "path":"folders/TileSets.yy",
   },
   "resourceType":"GMTileSet",
   "resourceVersion":"2.0",
