@@ -117,10 +117,14 @@ if (surface_exists(panel_surface) && surface_set_target(panel_surface))
         draw_bevel(35, 88, 389, 122, 2, shadow);
         var caret = (current_time mod 900 < 450) ? "_" : "";
         var input_text = save_name + caret;
-        var text_scale = min(1, 334 / max(1, string_width(input_text)));
+        // Keep the caret visible when the typed name exceeds the field width.
+        while (string_width(input_text) > 334)
+        {
+            input_text = string_delete(input_text, 1, 1);
+        }
         draw_set_color(parchment);
         draw_set_halign(fa_left);
-        draw_text_transformed(43, 107, input_text, text_scale, text_scale, 0);
+        draw_text(43, 107, input_text);
 
         draw_set_halign(fa_center);
         if (menu_error != "") draw_text(212, 145, menu_error);
@@ -139,14 +143,22 @@ if (surface_exists(panel_surface) && surface_set_target(panel_surface))
 
             draw_set_color(parchment);
             draw_set_halign(fa_left);
-            var text_scale = min(1, 328 / max(1, string_width(entry.name)));
-            var name_y = bounds[1] + (entry.saved_at > 0 ? 11 : 18);
-            draw_text_transformed(46, name_y, entry.name, text_scale, text_scale, 0);
+            var display_name = entry.name;
+            if (string_width(display_name) > 333)
+            {
+                while (string_width(display_name + "...") > 333)
+                {
+                    display_name = string_delete(display_name, string_length(display_name), 1);
+                }
+                display_name += "...";
+            }
+            var name_y = bounds[1] + (entry.saved_at > 0 ? 9 : 18);
+            draw_text(46, name_y, display_name);
             if (entry.saved_at > 0)
             {
                 draw_set_color(gold);
                 var date_label = date_date_string(entry.saved_at) + "  " + date_time_string(entry.saved_at);
-                draw_text_transformed(46, bounds[1] + 25, date_label, 0.75, 0.75, 0);
+                draw_text(46, bounds[1] + 25, date_label);
             }
         }
         if (load_last_page() > 0)

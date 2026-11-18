@@ -14,6 +14,7 @@
   "Folders":[
     {"$GMFolder":"","%Name":"Objects","folderPath":"folders/Objects.yy","name":"Objects","resourceType":"GMFolder","resourceVersion":"2.0",},
     {"$GMFolder":"","%Name":"Rooms","folderPath":"folders/Rooms.yy","name":"Rooms","resourceType":"GMFolder","resourceVersion":"2.0",},
+    {"$GMFolder":"","%Name":"Scripts","folderPath":"folders/Scripts.yy","name":"Scripts","resourceType":"GMFolder","resourceVersion":"2.0",},
     {"$GMFolder":"","%Name":"Sprites","folderPath":"folders/Sprites.yy","name":"Sprites","resourceType":"GMFolder","resourceVersion":"2.0",},
     {"$GMFolder":"","%Name":"TileSets","folderPath":"folders/TileSets.yy","name":"TileSets","resourceType":"GMFolder","resourceVersion":"2.0",},
   ],
@@ -30,6 +31,7 @@
   "name":"Table of adventure",
   "resources":[
     {"id":{"name":"obj_main_chr_girl","path":"objects/obj_main_chr_girl/obj_main_chr_girl.yy",},},
+    {"id":{"name":"obj_market","path":"objects/obj_market/obj_market.yy",},},
     {"id":{"name":"obj_title_logo","path":"objects/obj_title_logo/obj_title_logo.yy",},},
     {"id":{"name":"obj_title_menu","path":"objects/obj_title_menu/obj_title_menu.yy",},},
     {"id":{"name":"obj_title","path":"objects/obj_title/obj_title.yy",},},
@@ -37,6 +39,7 @@
     {"id":{"name":"rm_main","path":"rooms/rm_main/rm_main.yy",},},
     {"id":{"name":"rm_market","path":"rooms/rm_market/rm_market.yy",},},
     {"id":{"name":"rm_title","path":"rooms/rm_title/rm_title.yy",},},
+    {"id":{"name":"scr_market_catalog","path":"scripts/scr_market_catalog/scr_market_catalog.yy",},},
     {"id":{"name":"spr_main_chr","path":"sprites/spr_main_chr/spr_main_chr.yy",},},
     {"id":{"name":"spr_tiles","path":"sprites/spr_tiles/spr_tiles.yy",},},
     {"id":{"name":"spr_title_logo_shadow","path":"sprites/spr_title_logo_shadow/spr_title_logo_shadow.yy",},},

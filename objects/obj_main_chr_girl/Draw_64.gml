@@ -1,3 +1,5 @@
+if (room == rm_market) exit;
+
 var slot_size = 42;
 var slot_step = 46;
 var frame_padding = 12;

@@ -1,4 +1,4 @@
-if (instance_exists(obj_title_menu) && obj_title_menu.gameplay_input_blocked)
+if (room == rm_market || (instance_exists(obj_title_menu) && obj_title_menu.gameplay_input_blocked))
 {
     walk_phase = 0;
     image_index = idle_frames[facing];
@@ -26,17 +26,6 @@ if (inventory_open)
 
 if (keyboard_check_pressed(ord("F")))
 {
-    if (room == rm_market)
-    {
-        var destination = rm_main;
-        if (variable_global_exists("windmill_return") && is_struct(global.windmill_return))
-        {
-            destination = global.windmill_return.room_id;
-        }
-        room_goto(destination);
-        exit;
-    }
-
     var windmill = instance_nearest(x, y, obj_windmill);
     if (windmill != noone && windmill.player_at_door(x, y))
     {

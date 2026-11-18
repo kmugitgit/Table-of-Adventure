@@ -1,3 +1,5 @@
+if (room == rm_market) exit;
+
 var previous_filter = gpu_get_texfilter();
 gpu_set_texfilter(false);
 draw_sprite_ext(sprite_index, image_index, round(x), round(y),
