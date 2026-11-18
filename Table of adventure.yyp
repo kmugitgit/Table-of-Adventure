@@ -38,8 +38,6 @@
     {"id":{"name":"rm_market","path":"rooms/rm_market/rm_market.yy",},},
     {"id":{"name":"rm_title","path":"rooms/rm_title/rm_title.yy",},},
     {"id":{"name":"spr_main_chr","path":"sprites/spr_main_chr/spr_main_chr.yy",},},
-    {"id":{"name":"spr_spring_grass_tuft","path":"sprites/spr_spring_grass_tuft/spr_spring_grass_tuft.yy",},},
-    {"id":{"name":"spr_spring_terrain","path":"sprites/spr_spring_terrain/spr_spring_terrain.yy",},},
     {"id":{"name":"spr_tiles","path":"sprites/spr_tiles/spr_tiles.yy",},},
     {"id":{"name":"spr_title_logo_shadow","path":"sprites/spr_title_logo_shadow/spr_title_logo_shadow.yy",},},
     {"id":{"name":"spr_title_logo","path":"sprites/spr_title_logo/spr_title_logo.yy",},},

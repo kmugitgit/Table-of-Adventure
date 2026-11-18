@@ -11,18 +11,13 @@
   ],
   "isDnd":false,
   "layers":[
-    {"$GMRTileLayer":"","%Name":"Tiles_1","depth":0,"effectEnabled":true,"effectType":null,"gridX":32,"gridY":32,"hierarchyFrozen":false,"inheritLayerDepth":false,"inheritLayerSettings":false,"inheritSubLayers":true,"inheritVisibility":true,"layers":[],"name":"Tiles_1","properties":[],"resourceType":"GMRTileLayer","resourceVersion":"2.0","tiles":{"SerialiseHeight":48,"SerialiseWidth":86,"TileCompressedData":[
-          -1517,-2147483648,3,1,5,9,-81,-2147483648,5,1,5,29,6,10,-81,-2147483648,1,2,-3,6,2,24,9,-79,-2147483648,
-          2,1,29,-4,6,1,10,-77,-2147483648,9,17,8,30,7,7,28,6,6,10,-76,-2147483648,10,17,35,97,101,105,60,2,6,
-          6,10,-74,-2147483648,12,1,22,35,50,99,103,107,1,29,6,23,11,-73,-2147483648,12,4,31,10,52,78,55,59,1,
-          29,6,23,11,-75,-2147483648,2,2,24,-4,5,4,29,6,6,10,-76,-2147483648,1,2,-8,6,1,10,-76,-2147483648,1,2,
-          -7,6,2,23,11,-76,-2147483648,3,3,7,28,-4,6,2,23,11,-79,-2147483648,6,3,7,7,28,23,11,-83,-2147483648,
-          2,3,11,-1494,-2147483648,
-        ],"TileDataFormat":1,},"tilesetId":{"name":"ts_all","path":"tilesets/ts_all/ts_all.yy",},"userdefinedDepth":false,"visible":true,"x":0,"y":0,},
-    {"$GMRInstanceLayer":"","%Name":"Instances","depth":100,"effectEnabled":true,"effectType":null,"gridX":32,"gridY":32,"hierarchyFrozen":false,"inheritLayerDepth":false,"inheritLayerSettings":false,"inheritSubLayers":true,"inheritVisibility":true,"instances":[
+    {"$GMRInstanceLayer":"","%Name":"Instances","depth":0,"effectEnabled":true,"effectType":null,"gridX":32,"gridY":32,"hierarchyFrozen":false,"inheritLayerDepth":false,"inheritLayerSettings":false,"inheritSubLayers":true,"inheritVisibility":true,"instances":[
         {"$GMRInstance":"v4","%Name":"inst_C9A74627","colour":4294967295,"frozen":false,"hasCreationCode":false,"ignore":false,"imageIndex":0,"imageSpeed":0.0,"inheritCode":false,"inheritedItemId":null,"inheritItemSettings":false,"isDnd":false,"name":"inst_C9A74627","objectId":{"name":"obj_main_chr_girl","path":"objects/obj_main_chr_girl/obj_main_chr_girl.yy",},"properties":[],"resourceType":"GMRInstance","resourceVersion":"2.0","rotation":0.0,"scaleX":1.0,"scaleY":1.0,"x":588.0,"y":569.0,},
         {"$GMRInstance":"v4","%Name":"inst_474F07A0","colour":4294967295,"frozen":false,"hasCreationCode":false,"ignore":false,"imageIndex":0,"imageSpeed":1.0,"inheritCode":false,"inheritedItemId":null,"inheritItemSettings":false,"isDnd":false,"name":"inst_474F07A0","objectId":{"name":"obj_windmill","path":"objects/obj_windmill/obj_windmill.yy",},"properties":[],"resourceType":"GMRInstance","resourceVersion":"2.0","rotation":0.0,"scaleX":1.195,"scaleY":1.2644628,"x":689.5975,"y":382.73553,},
       ],"layers":[],"name":"Instances","properties":[],"resourceType":"GMRInstanceLayer","resourceVersion":"2.0","userdefinedDepth":false,"visible":true,},
+    {"$GMRTileLayer":"","%Name":"Tiles_1","depth":100,"effectEnabled":true,"effectType":null,"gridX":32,"gridY":32,"hierarchyFrozen":false,"inheritLayerDepth":false,"inheritLayerSettings":false,"inheritSubLayers":true,"inheritVisibility":true,"layers":[],"name":"Tiles_1","properties":[],"resourceType":"GMRTileLayer","resourceVersion":"2.0","tiles":{"SerialiseHeight":48,"SerialiseWidth":86,"TileCompressedData":[
+          -2020,6,2,49,57,-84,6,2,50,58,-84,6,2,50,58,-84,6,2,50,58,-84,6,2,51,59,-1762,6,
+        ],"TileDataFormat":1,},"tilesetId":{"name":"ts_all","path":"tilesets/ts_all/ts_all.yy",},"userdefinedDepth":false,"visible":true,"x":0,"y":0,},
     {"$GMRBackgroundLayer":"","%Name":"Background","animationFPS":15.0,"animationSpeedType":0,"colour":4278190080,"depth":200,"effectEnabled":true,"effectType":null,"gridX":32,"gridY":32,"hierarchyFrozen":false,"hspeed":0.0,"htiled":false,"inheritLayerDepth":false,"inheritLayerSettings":false,"inheritSubLayers":true,"inheritVisibility":true,"layers":[],"name":"Background","properties":[],"resourceType":"GMRBackgroundLayer","resourceVersion":"2.0","spriteId":null,"stretch":false,"userdefinedAnimFPS":false,"userdefinedDepth":false,"visible":true,"vspeed":0.0,"vtiled":false,"x":0,"y":0,},
   ],
   "name":"rm_main",
