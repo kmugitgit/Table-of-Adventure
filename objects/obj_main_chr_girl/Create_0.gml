@@ -52,3 +52,5 @@ inventory_colors = {
     well: make_color_rgb(44, 32, 26),
     selected_well: make_color_rgb(91, 98, 52)
 };
+
+if (!instance_exists(obj_title_menu)) instance_create_depth(0, 0, 0, obj_title_menu);

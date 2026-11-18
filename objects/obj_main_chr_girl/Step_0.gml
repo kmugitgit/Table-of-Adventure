@@ -1,5 +1,12 @@
+if (instance_exists(obj_title_menu) && obj_title_menu.gameplay_input_blocked)
+{
+    walk_phase = 0;
+    image_index = idle_frames[facing];
+    exit;
+}
+
 if (keyboard_check_pressed(ord("I"))) inventory_open = !inventory_open;
-if (keyboard_check_pressed(vk_escape)) inventory_open = false;
+
 
 for (var slot_index = 0; slot_index < inventory_columns; slot_index++)
 {

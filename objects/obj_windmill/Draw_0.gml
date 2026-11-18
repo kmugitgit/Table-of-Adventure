@@ -4,7 +4,8 @@ var axle_direction = image_angle + 90;
 var axle_x = x + lengthdir_x(axle_distance, axle_direction);
 var axle_y = y + lengthdir_y(axle_distance, axle_direction);
 var turn_duration_ms = 20000;
-var rotor_angle = image_angle - (current_time mod turn_duration_ms) * 360 / turn_duration_ms;
+var clock = instance_exists(obj_title_menu) ? obj_title_menu.play_time_ms : current_time;
+var rotor_angle = image_angle - frac(clock / turn_duration_ms) * 360;
 
 var previous_filter = gpu_get_texfilter();
 gpu_set_texfilter(false);
