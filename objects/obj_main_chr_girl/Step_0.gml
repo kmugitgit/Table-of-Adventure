@@ -1,3 +1,22 @@
+if (keyboard_check_pressed(ord("I"))) inventory_open = !inventory_open;
+if (keyboard_check_pressed(vk_escape)) inventory_open = false;
+
+for (var slot_index = 0; slot_index < inventory_columns; slot_index++)
+{
+    if (keyboard_check_pressed(ord("1") + slot_index))
+    {
+        inventory_selected_slot = slot_index;
+        break;
+    }
+}
+
+if (inventory_open)
+{
+    walk_phase = 0;
+    image_index = idle_frames[facing];
+    exit;
+}
+
 if (keyboard_check_pressed(ord("F")))
 {
     if (room == rm_market)

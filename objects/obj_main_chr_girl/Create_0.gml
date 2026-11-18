@@ -24,3 +24,31 @@ if (variable_global_exists("windmill_return") && is_struct(global.windmill_retur
 }
 
 depth = -round(y);
+
+inventory_open = false;
+inventory_columns = 9;
+inventory_rows = 3;
+inventory_selected_slot = 0;
+inventory_surface = -1;
+
+ini_open("settings.ini");
+var old_ui_size = clamp(round(ini_read_real("display", "ui_size", 1)), 0, 2);
+inventory_scale = clamp(ini_read_real("display", "ui_scale_percent", 80 + old_ui_size * 20), 80, 120) / 100;
+ini_close();
+
+var previous_font_aa = font_add_get_enable_aa();
+font_add_enable_aa(false);
+inventory_font = font_add("Galmuri14.ttf", 11, false, false, 32, 126);
+font_add_enable_aa(previous_font_aa);
+
+inventory_colors = {
+    shadow: make_color_rgb(29, 22, 18),
+    wood: make_color_rgb(65, 44, 33),
+    wood_highlight: make_color_rgb(95, 63, 43),
+    bronze: make_color_rgb(153, 105, 58),
+    gold: make_color_rgb(236, 188, 103),
+    parchment: make_color_rgb(255, 232, 179),
+    muted: make_color_rgb(190, 157, 119),
+    well: make_color_rgb(44, 32, 26),
+    selected_well: make_color_rgb(91, 98, 52)
+};
