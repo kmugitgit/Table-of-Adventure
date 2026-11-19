@@ -29,8 +29,18 @@ if (click)
     }
 }
 
+var category_direction = keyboard_check_pressed(ord("E")) - keyboard_check_pressed(ord("Q"));
+if (category_direction != 0)
+{
+    var category_count = array_length(market_tabs);
+    market_category = (market_category + category_direction + category_count) mod category_count;
+    market_select(0);
+    exit;
+}
+
 var items = market_catalog[market_category];
-var row_direction = keyboard_check_pressed(vk_down) - keyboard_check_pressed(vk_up);
+var row_direction = (keyboard_check_pressed(vk_down) || keyboard_check_pressed(ord("S")))
+    - (keyboard_check_pressed(vk_up) || keyboard_check_pressed(ord("W")));
 if (row_direction != 0 && array_length(items) > 0)
 {
     var next_index = clamp(market_selected + row_direction, 0, array_length(items) - 1);
@@ -39,12 +49,14 @@ if (row_direction != 0 && array_length(items) > 0)
 }
 
 var visible_pages = market_visible_page_count();
-if (keyboard_check_pressed(vk_left) || (click && market_hit(market_page_button(-1))))
+if (keyboard_check_pressed(vk_left) || keyboard_check_pressed(ord("A"))
+    || (click && market_hit(market_page_button(-1))))
 {
     market_set_page(market_page - 1);
     exit;
 }
-if (keyboard_check_pressed(vk_right) || (click && market_hit(market_page_button(visible_pages))))
+if (keyboard_check_pressed(vk_right) || keyboard_check_pressed(ord("D"))
+    || (click && market_hit(market_page_button(visible_pages))))
 {
     market_set_page(market_page + 1);
     exit;

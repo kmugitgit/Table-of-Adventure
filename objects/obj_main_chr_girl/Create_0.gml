@@ -23,7 +23,25 @@ if (variable_global_exists("windmill_return") && is_struct(global.windmill_retur
     }
 }
 
-depth = -round(y);
+depth = -round(y + (sprite_get_bbox_bottom(sprite_index)
+    - sprite_get_yoffset(sprite_index)) * image_yscale);
+
+// Keep the camera and the drawn sprite on the same pixel grid.
+follow_camera = -1;
+previous_camera_update = -1;
+if (room == rm_main && view_enabled && view_camera[0] != -1)
+{
+    follow_camera = view_camera[0];
+    previous_camera_update = camera_get_update_script(follow_camera);
+    camera_set_update_script(follow_camera, function()
+    {
+        var width = camera_get_view_width(follow_camera);
+        var height = camera_get_view_height(follow_camera);
+        var camera_x = clamp(round(x) - width * 0.5, 0, max(0, room_width - width));
+        var camera_y = clamp(round(y) - height * 0.5, 0, max(0, room_height - height));
+        camera_set_view_pos(follow_camera, round(camera_x), round(camera_y));
+    });
+}
 
 inventory_open = false;
 inventory_columns = 9;

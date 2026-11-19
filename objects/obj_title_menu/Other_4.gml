@@ -19,7 +19,8 @@ player.y = clamp(data.y, 0, room_height - 1);
 player.facing = clamp(round(data.facing), 0, array_length(player.idle_frames) - 1);
 player.image_index = player.idle_frames[player.facing];
 player.inventory_selected_slot = clamp(round(data.selected_slot), 0, player.inventory_columns - 1);
-player.depth = -round(player.y);
+player.depth = -round(player.y + (sprite_get_bbox_bottom(player.sprite_index)
+    - sprite_get_yoffset(player.sprite_index)) * player.image_yscale);
 
 global.windmill_return = undefined;
 var entrance = variable_struct_get(data, "entrance");

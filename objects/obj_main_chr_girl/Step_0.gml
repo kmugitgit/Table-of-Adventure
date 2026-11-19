@@ -65,7 +65,9 @@ if (inventory_open)
 if (keyboard_check_pressed(ord("F")))
 {
     var windmill = instance_nearest(x, y, obj_windmill);
-    if (windmill != noone && windmill.player_at_door(x, y))
+    var player_feet_y = y + (sprite_get_bbox_bottom(sprite_index)
+        - sprite_get_yoffset(sprite_index)) * image_yscale;
+    if (windmill != noone && windmill.player_at_door(x, player_feet_y))
     {
         global.windmill_return = { room_id: room, x: x, y: y };
         room_goto(rm_market);
@@ -109,10 +111,11 @@ if (move_x != 0 || move_y != 0)
     {
         x = next_x;
         y = next_y;
-        if (depth != -round(y)) depth = -round(y);
+        var feet_depth = -round(feet_y);
+        if (depth != feet_depth) depth = feet_depth;
         image_index = walk_start_frames[facing] + floor(walk_phase);
-        walk_phase += walk_frames_per_step;
-        if (walk_phase >= walk_frame_count) walk_phase -= walk_frame_count;
+        // Modulo avoids an epsilon comparison wrapping a near-final frame below zero.
+        walk_phase = (walk_phase + walk_frames_per_step) mod walk_frame_count;
         exit;
     }
 }

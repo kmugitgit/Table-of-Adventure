@@ -95,3 +95,51 @@ draw_set_halign(previous_halign);
 draw_set_font(previous_font);
 draw_set_alpha(previous_alpha);
 draw_set_color(previous_colour);
+
+
+// Anchor the screen-sized prompt to the windmill doorway.
+var windmill = instance_nearest(x, y, obj_windmill);
+var feet_y = y + (sprite_get_bbox_bottom(sprite_index) - sprite_get_yoffset(sprite_index)) * image_yscale;
+var input_blocked = instance_exists(obj_title_menu) && obj_title_menu.gameplay_input_blocked;
+if (!inventory_open && !input_blocked && windmill != noone && windmill.player_at_door(x, feet_y))
+{
+    var camera = view_camera[0];
+    var application_rect = application_get_position();
+    var screen_width = application_rect[2] - application_rect[0];
+    var screen_height = application_rect[3] - application_rect[1];
+    var gui_per_pixel_x = display_get_gui_width() / screen_width;
+    var gui_per_pixel_y = display_get_gui_height() / screen_height;
+    var doorway_hint = windmill.windmill_point(28, 13);
+    var screen_x = round((doorway_hint.x - camera_get_view_x(camera)) * screen_width / camera_get_view_width(camera));
+    var screen_y = round((doorway_hint.y - camera_get_view_y(camera)) * screen_height / camera_get_view_height(camera));
+
+    gpu_set_texfilter(false);
+    draw_set_alpha(1);
+    draw_set_font(inventory_font);
+    draw_set_halign(fa_left);
+    draw_set_valign(fa_top);
+    var key_pixels = 55;
+    var font_info = font_get_info(inventory_font);
+    var glyph = font_info.glyphs[$ "F"];
+    var glyph_scale = max(1, floor((key_pixels - 12) / glyph.h));
+    var glyph_x = floor((key_pixels - glyph.w * glyph_scale) * 0.5) - glyph.offset * glyph_scale;
+    var glyph_y = floor((key_pixels - glyph.h * glyph_scale) * 0.5) - glyph.yoffset * glyph_scale;
+    var hint_left = screen_x * gui_per_pixel_x;
+    var hint_top = screen_y * gui_per_pixel_y;
+    var hint_right = (screen_x + key_pixels) * gui_per_pixel_x;
+    var hint_bottom = (screen_y + key_pixels) * gui_per_pixel_y;
+    draw_set_color(make_color_rgb(49, 35, 24));
+    draw_rectangle(hint_left, hint_top, hint_right, hint_bottom, false);
+    draw_set_color(make_color_rgb(250, 222, 163));
+    draw_rectangle(hint_left, hint_top, hint_right, hint_bottom, true);
+    draw_text_transformed((screen_x + glyph_x) * gui_per_pixel_x,
+        (screen_y + glyph_y) * gui_per_pixel_y,
+        "F", gui_per_pixel_x * glyph_scale, gui_per_pixel_y * glyph_scale, 0);
+
+    gpu_set_texfilter(previous_filter);
+    draw_set_valign(previous_valign);
+    draw_set_halign(previous_halign);
+    draw_set_font(previous_font);
+    draw_set_alpha(previous_alpha);
+    draw_set_color(previous_colour);
+}
