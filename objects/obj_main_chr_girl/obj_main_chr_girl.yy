@@ -34,8 +34,8 @@
   "resourceVersion":"2.0",
   "solid":false,
   "spriteId":{
-    "name":"spr_main_chr",
-    "path":"sprites/spr_main_chr/spr_main_chr.yy",
+    "name":"spr_main_chracter",
+    "path":"sprites/spr_main_chracter/spr_main_chracter.yy",
   },
   "spriteMaskId":null,
   "visible":true,

@@ -8,7 +8,7 @@ function scr_market_catalog()
 {
     return [
         [ // 씨앗
-            market_item("순무 씨앗", noone, "둥글고 하얀 순무를\n키울 수 있는 씨앗입니다.", 12, "seed", make_color_rgb(223, 153, 183)),
+            market_item("하트비트 씨앗", noone, "둥글고 하얀 순무를\n키울 수 있는 씨앗입니다.", 12, "seed", make_color_rgb(223, 153, 183)),
             market_item("당근 씨앗", noone, "선명한 주황빛 당근을\n키울 수 있는 씨앗입니다.", 18, "seed", make_color_rgb(238, 145, 62)),
             market_item("밀 씨앗", noone, "황금빛 밀 이삭을\n키울 수 있는 씨앗입니다.", 20, "seed", make_color_rgb(244, 191, 81)),
             market_item("양배추 씨앗", noone, "잎이 단단히 여무는\n양배추의 씨앗입니다.", 24, "seed", make_color_rgb(144, 178, 79)),
