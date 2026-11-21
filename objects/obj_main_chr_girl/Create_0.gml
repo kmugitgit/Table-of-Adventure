@@ -4,7 +4,8 @@ enum HeroFacing { Down, Up, Right, Left }
 walk_start_frames = [1, 7, 13, 19];
 idle_frames = [0, 7, 13, 19];
 walk_frame_count = 6;
-walk_frames_per_step = 6 / game_get_speed(gamespeed_fps);
+// Advance the six-frame walk cycle at 10 frames per second.
+walk_frames_per_step = 10 / game_get_speed(gamespeed_fps);
 walk_phase = 0;
 move_speed = 70 / game_get_speed(gamespeed_fps);
 facing = HeroFacing.Down;
@@ -26,7 +27,7 @@ if (variable_global_exists("windmill_return") && is_struct(global.windmill_retur
 depth = -round(y + (sprite_get_bbox_bottom(sprite_index)
     - sprite_get_yoffset(sprite_index)) * image_yscale);
 
-// Keep the camera and the drawn sprite on the same pixel grid.
+// Keep the camera and the drawn sprite on the same subpixel position.
 follow_camera = -1;
 previous_camera_update = -1;
 if (room == rm_main && view_enabled && view_camera[0] != -1)
@@ -37,9 +38,9 @@ if (room == rm_main && view_enabled && view_camera[0] != -1)
     {
         var width = camera_get_view_width(follow_camera);
         var height = camera_get_view_height(follow_camera);
-        var camera_x = clamp(round(x) - width * 0.5, 0, max(0, room_width - width));
-        var camera_y = clamp(round(y) - height * 0.5, 0, max(0, room_height - height));
-        camera_set_view_pos(follow_camera, round(camera_x), round(camera_y));
+        var camera_x = clamp(x - width * 0.5, 0, max(0, room_width - width));
+        var camera_y = clamp(y - height * 0.5, 0, max(0, room_height - height));
+        camera_set_view_pos(follow_camera, camera_x, camera_y);
     });
 }
 

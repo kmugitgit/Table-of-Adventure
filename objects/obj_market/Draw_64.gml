@@ -55,7 +55,7 @@ for (var row = 0; row < market_rows_per_page; row++)
     var centre_y = (bounds[1] + bounds[3]) * 0.5;
 
     draw_set_color(market_shade);
-    draw_rectangle(46, centre_y - 11, 68, centre_y + 11, false);
+    draw_rectangle(40, centre_y - 16, 74, centre_y + 16, false);
     market_draw_icon(item, 57, centre_y, 2);
     draw_set_color(market_text);
     draw_set_halign(fa_left);

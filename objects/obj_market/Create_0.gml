@@ -167,8 +167,12 @@ market_draw_icon = function(_item, _x, _y, _scale)
     {
         var source_width = sprite_get_width(item_sprite);
         var source_height = sprite_get_height(item_sprite);
-        var scale = 10 * _scale / max(source_width, source_height);
-        if (scale >= 1) scale = floor(scale);
+        // Prefer integer enlargement so pixel art keeps consistent pixel sizes.
+        var source_max = max(source_width, source_height);
+        var target_max = 11 * _scale;
+        var scale = target_max >= source_max
+            ? max(1, round(target_max / source_max))
+            : target_max / source_max;
         var icon_width = max(1, floor(source_width * scale));
         var icon_height = max(1, floor(source_height * scale));
         draw_sprite_stretched(item_sprite, 0, round(_x - icon_width * 0.5),

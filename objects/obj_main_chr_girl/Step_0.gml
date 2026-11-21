@@ -77,16 +77,20 @@ if (keyboard_check_pressed(ord("F")))
 
 var move_x = (keyboard_check(vk_right) || keyboard_check(ord("D")))
     - (keyboard_check(vk_left) || keyboard_check(ord("A")));
-// Horizontal input takes priority when both axes are pressed.
-var move_y = 0;
-if (move_x == 0)
+var move_y = (keyboard_check(vk_down) || keyboard_check(ord("S")))
+    - (keyboard_check(vk_up) || keyboard_check(ord("W")));
+
+// Normalize diagonal input so it doesn't move faster than a single direction.
+var move_length = point_distance(0, 0, move_x, move_y);
+if (move_length > 0)
 {
-    move_y = (keyboard_check(vk_down) || keyboard_check(ord("S")))
-        - (keyboard_check(vk_up) || keyboard_check(ord("W")));
+    move_x /= move_length;
+    move_y /= move_length;
 }
 
 if (move_x != 0 || move_y != 0)
 {
+    // On diagonal movement, keep the horizontal facing direction.
     if (move_x > 0) facing = HeroFacing.Right;
     else if (move_x < 0) facing = HeroFacing.Left;
     else if (move_y < 0) facing = HeroFacing.Up;
@@ -120,5 +124,6 @@ if (move_x != 0 || move_y != 0)
     }
 }
 
-walk_phase = 0;
-image_index = idle_frames[facing];
+image_index = idle_frames[HeroFacing.Down];
+// Keep the gait phase moving while idle so quick taps don't restart on the same pose.
+walk_phase = (walk_phase + walk_frames_per_step) mod walk_frame_count;
