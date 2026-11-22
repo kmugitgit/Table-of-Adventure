@@ -12,7 +12,7 @@ function scr_market_catalog()
             market_item("헬라피뇨 씨앗", spr_seed_Hellapeno, "헬라피뇨를\n키울 수 있는 씨앗입니다.", 18, "seed", make_color_rgb(238, 145, 62)),
             market_item("구름감자 씨앗", spr_seed_CloudPotato, "구름감자를\n키울 수 있는 씨앗입니다.", 20, "seed", make_color_rgb(244, 191, 81)),
             market_item("얼음당근 씨앗", spr_seed_IceCarrot, "얼음당근을\n키울 수 있는 씨앗입니다.", 24, "seed", make_color_rgb(144, 178, 79)),
-            market_item("감자 씨앗", noone, "흙 속에서 감자를\n키울 수 있는 씨감자입니다.", 28, "seed", make_color_rgb(198, 142, 91)),
+            market_item("마그마토 씨앗", spr_seed_Magmato, "마그마토를\n키울 수 있는 씨감자입니다.", 28, "seed", make_color_rgb(198, 142, 91)),
             market_item("토마토 씨앗", noone, "붉게 익는 토마토를\n키울 수 있는 씨앗입니다.", 32, "seed", make_color_rgb(219, 90, 68)),
             market_item("딸기 씨앗", noone, "작고 달콤한 딸기를\n키울 수 있는 씨앗입니다.", 38, "seed", make_color_rgb(237, 114, 132)),
             market_item("호박 씨앗", noone, "크고 둥근 호박을\n키울 수 있는 씨앗입니다.", 42, "seed", make_color_rgb(239, 160, 75)),

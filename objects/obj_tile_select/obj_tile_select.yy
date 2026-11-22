@@ -1,9 +1,9 @@
 {
   "$GMObject":"",
-  "%Name":"obj_test",
+  "%Name":"obj_tile_select",
   "eventList":[],
   "managed":true,
-  "name":"obj_test",
+  "name":"obj_tile_select",
   "overriddenProperties":[],
   "parent":{
     "name":"Objects",
