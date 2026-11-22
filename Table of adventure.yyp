@@ -33,6 +33,7 @@
   "resources":[
     {"id":{"name":"obj_main_chr_girl","path":"objects/obj_main_chr_girl/obj_main_chr_girl.yy",},},
     {"id":{"name":"obj_market","path":"objects/obj_market/obj_market.yy",},},
+    {"id":{"name":"obj_test","path":"objects/obj_test/obj_test.yy",},},
     {"id":{"name":"obj_title_logo","path":"objects/obj_title_logo/obj_title_logo.yy",},},
     {"id":{"name":"obj_title_menu","path":"objects/obj_title_menu/obj_title_menu.yy",},},
     {"id":{"name":"obj_title","path":"objects/obj_title/obj_title.yy",},},
