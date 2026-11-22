@@ -35,6 +35,7 @@ if (surface_exists(panel_surface) && surface_set_target(panel_surface))
     var heading;
     switch (menu_page)
     {
+        case TitleMenuPage.Codex: heading = "도감"; break;
         case TitleMenuPage.Settings: heading = "설정"; break;
         case TitleMenuPage.Pause: heading = "일시정지"; break;
         case TitleMenuPage.ExitConfirm: heading = "나가기"; break;
@@ -45,7 +46,78 @@ if (surface_exists(panel_surface) && surface_set_target(panel_surface))
     draw_text_transformed(212, 32, heading,
         2, 2, 0);
 
-    if (menu_page == TitleMenuPage.Settings)
+    if (menu_page == TitleMenuPage.Codex)
+    {
+        for (var tab = 0; tab < array_length(codex_tabs); tab++)
+            draw_control(codex_tab_bounds(tab), codex_tabs[tab], codex_category == tab);
+        draw_bevel(25, 81, 399, 207, 3, make_color_rgb(64, 44, 31));
+
+        if (codex_category == 1)
+        {
+            draw_set_color(parchment);
+            draw_set_halign(fa_center);
+            for (var tier = 0; tier < array_length(codex_tiers); tier++)
+                draw_text(140 + tier * 54, 92, codex_tiers[tier]);
+            draw_set_halign(fa_left);
+            for (var tool = 0; tool < array_length(codex_tool_names); tool++)
+                draw_text(34, 121 + tool * 34, codex_tool_names[tool]);
+        }
+
+        var items = codex_catalog[codex_category];
+        var hover_entry = undefined;
+        for (var slot = 0; slot < codex_page_size(); slot++)
+        {
+            var index = codex_page * codex_page_size() + slot;
+            var bounds = codex_slot_bounds(slot);
+            var has_entry = index < array_length(items);
+            var found = has_entry && codex_was_found(items[index].id);
+            var hover = has_entry && over_control(bounds);
+            var selected = has_entry && codex_selected == index;
+            draw_bevel(bounds[0], bounds[1], bounds[2], bounds[3], 2,
+                hover && found ? gold : (selected ? moss : bronze));
+            draw_bevel(bounds[0] + 2, bounds[1] + 2, bounds[2] - 2, bounds[3] - 2, 1, shadow);
+            if (!has_entry) continue;
+            codex_draw_item(items[index], bounds, found);
+            if (hover && found) hover_entry = items[index];
+        }
+
+        if (codex_last_page() > 0)
+        {
+            draw_set_color(parchment);
+            draw_set_halign(fa_center);
+            draw_text(212, 207, string(codex_page + 1) + " / " + string(codex_last_page() + 1));
+            if (codex_page > 0) draw_control(load_previous_bounds, "이전 목록", false);
+            if (codex_page < codex_last_page()) draw_control(load_next_bounds, "다음 목록", false);
+        }
+
+        if (!is_undefined(hover_entry))
+        {
+            var popup_width = 190;
+            var text_width = popup_width - 18;
+            var title_height = string_height_ext(hover_entry.name, 20, text_width);
+            var desc_height = string_height_ext(hover_entry.description, 20, text_width);
+            var popup_height = min(188, title_height + desc_height + 28);
+            var popup_x = clamp(round(panel_mouse_x()) + 9, 15, panel_width - popup_width - 15);
+            var popup_y = clamp(round(panel_mouse_y()) + 9, 49, panel_height - popup_height - 10);
+            draw_bevel(popup_x + 2, popup_y + 3, popup_x + popup_width + 2, popup_y + popup_height + 3, 3, shadow);
+            draw_bevel(popup_x, popup_y, popup_x + popup_width, popup_y + popup_height, 3, gold);
+            draw_bevel(popup_x + 2, popup_y + 2, popup_x + popup_width - 2, popup_y + popup_height - 2, 2,
+                make_color_rgb(226, 200, 149));
+            var previous_scissor = gpu_get_scissor();
+            gpu_set_scissor(popup_x + 8, popup_y + 8, text_width, popup_height - 16);
+            draw_set_color(make_color_rgb(63, 43, 29));
+            draw_set_halign(fa_left);
+            draw_set_valign(fa_top);
+            draw_text_ext(popup_x + 9, popup_y + 8, hover_entry.name, 20, text_width);
+            draw_set_color(bronze);
+            draw_line(popup_x + 9, popup_y + title_height + 13, popup_x + popup_width - 9, popup_y + title_height + 13);
+            draw_set_color(make_color_rgb(63, 43, 29));
+            draw_text_ext(popup_x + 9, popup_y + title_height + 19, hover_entry.description, 20, text_width);
+            draw_set_valign(fa_middle);
+            gpu_set_scissor(previous_scissor);
+        }
+    }
+    else if (menu_page == TitleMenuPage.Settings)
     {
         for (var i = 0; i < array_length(slider_y); i++)
         {
@@ -202,7 +274,7 @@ if (surface_exists(panel_surface) && surface_set_target(panel_surface))
     }
 
     if (menu_page != TitleMenuPage.Pause && menu_page != TitleMenuPage.DeleteSave)
-        draw_control(back_bounds, "뒤로", false);
+        draw_control(back_bounds, menu_page == TitleMenuPage.Codex ? "닫기 [R]" : "뒤로", false);
     surface_reset_target();
 }
 

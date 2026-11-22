@@ -9,6 +9,7 @@ if (!is_struct(pending_load)) exit;
 
 var data = pending_load;
 pending_load = undefined;
+codex_restore_history(variable_struct_get(data, "codex_discovered"));
 var saved_gold = variable_struct_get(data, "gold");
 global.player_gold = is_numeric(saved_gold) && saved_gold >= 0 ? floor(saved_gold) : 0;
 var player = instance_find(obj_main_chr_girl, 0);

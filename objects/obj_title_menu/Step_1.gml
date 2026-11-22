@@ -1,18 +1,88 @@
 var click = mouse_check_button_pressed(mb_left);
 var escape_pressed = keyboard_check_pressed(vk_escape);
 var pause_pressed = escape_pressed && room != rm_market;
+var codex_pressed = keyboard_check_pressed(ord("R"));
 var in_title = room == rm_title;
-gameplay_input_blocked = !in_title && (menu_page != TitleMenuPage.Playing || pause_pressed);
+gameplay_input_blocked = !in_title && (menu_page != TitleMenuPage.Playing || pause_pressed || codex_pressed);
 
 switch (menu_page)
 {
     case TitleMenuPage.Playing:
-        if (pause_pressed)
+        if (codex_pressed)
+        {
+            with (obj_main_chr_girl) inventory_close();
+            codex_catalog = scr_codex_catalog();
+            menu_page = TitleMenuPage.Codex;
+        }
+        else if (pause_pressed)
         {
             with (obj_main_chr_girl) inventory_close();
             menu_page = TitleMenuPage.Pause;
         }
         else play_time_ms += delta_time / 1000;
+        exit;
+
+    case TitleMenuPage.Codex:
+        if (codex_pressed || escape_pressed || (click && over_control(back_bounds)))
+        {
+            menu_page = TitleMenuPage.Playing;
+            exit;
+        }
+        var category_direction = keyboard_check_pressed(ord("E")) - keyboard_check_pressed(ord("Q"));
+        if (category_direction != 0)
+        {
+            codex_set_category(codex_category + category_direction);
+            exit;
+        }
+        if (click)
+        {
+            for (var tab = 0; tab < array_length(codex_tabs); tab++)
+            {
+                if (over_control(codex_tab_bounds(tab)))
+                {
+                    codex_set_category(tab);
+                    exit;
+                }
+            }
+        }
+        var items = codex_catalog[codex_category];
+        var direction_x = (keyboard_check_pressed(vk_right) || keyboard_check_pressed(ord("D")))
+            - (keyboard_check_pressed(vk_left) || keyboard_check_pressed(ord("A")));
+        var direction_y = (keyboard_check_pressed(vk_down) || keyboard_check_pressed(ord("S")))
+            - (keyboard_check_pressed(vk_up) || keyboard_check_pressed(ord("W")));
+        if (array_length(items) > 0 && (direction_x != 0 || direction_y != 0))
+        {
+            var columns = codex_columns();
+            var row = codex_selected div columns;
+            var column = codex_selected mod columns;
+            column = clamp(column + direction_x, 0, columns - 1);
+            row = clamp(row + direction_y, 0, (array_length(items) - 1) div columns);
+            codex_select(min(row * columns + column, array_length(items) - 1));
+            exit;
+        }
+        if (mouse_wheel_up() || (click && codex_page > 0 && over_control(load_previous_bounds)))
+        {
+            codex_set_page(codex_page - 1);
+            exit;
+        }
+        if (mouse_wheel_down() || (click && codex_page < codex_last_page() && over_control(load_next_bounds)))
+        {
+            codex_set_page(codex_page + 1);
+            exit;
+        }
+        if (click)
+        {
+            for (var slot = 0; slot < codex_page_size(); slot++)
+            {
+                var index = codex_page * codex_page_size() + slot;
+                if (index >= array_length(items)) break;
+                if (over_control(codex_slot_bounds(slot)))
+                {
+                    codex_select(index);
+                    break;
+                }
+            }
+        }
         exit;
 
     case TitleMenuPage.Pause:
@@ -191,6 +261,7 @@ switch (menu_page)
                 case TitleMenuButton.New:
                     play_time_ms = 0;
                     global.player_gold = 0;
+                    codex_restore_history(undefined);
                     global.windmill_return = undefined;
                     room_goto(rm_main);
                     break;

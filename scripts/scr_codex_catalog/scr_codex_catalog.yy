@@ -1,0 +1,10 @@
+{
+  "$GMScript":"v1",
+  "%Name":"scr_codex_catalog",
+  "isCompatibility":false,
+  "isDnD":false,
+  "name":"scr_codex_catalog",
+  "parent":{"name":"Scripts","path":"folders/Scripts.yy",},
+  "resourceType":"GMScript",
+  "resourceVersion":"2.0",
+}

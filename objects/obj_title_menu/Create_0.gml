@@ -1,4 +1,4 @@
-enum TitleMenuPage { Title, Settings, Load, Playing, Pause, ExitConfirm, SaveName, DeleteSave }
+enum TitleMenuPage { Title, Settings, Load, Playing, Pause, ExitConfirm, SaveName, DeleteSave, Codex }
 enum TitleMenuButton { New, Load, Settings, Exit, Count }
 enum SettingsSlider { Effects, Music, InterfaceSize }
 
@@ -30,6 +30,56 @@ load_entries = [];
 load_page = 0;
 load_page_size = 4;
 delete_entry = undefined;
+codex_catalog = scr_codex_catalog();
+codex_tabs = ["씨앗", "농기구"];
+codex_tiers = ["나무", "구리", "철", "금", "티타늄"];
+codex_tool_names = ["괭이", "물뿌리개", "모종삽"];
+codex_category = 0;
+codex_selected = 0;
+codex_page = 0;
+if (!variable_global_exists("codex_discovered")) global.codex_discovered = [];
+
+codex_columns = function() { return codex_category == 0 ? 9 : 5; };
+codex_page_size = function() { return codex_columns() * 3; };
+codex_tab_bounds = function(_index)
+{
+    var left = 73 + _index * 146;
+    return [left, 52, left + 132, 77];
+};
+codex_slot_bounds = function(_slot)
+{
+    var columns = codex_columns();
+    var col = _slot mod columns;
+    var row = _slot div columns;
+    if (codex_category == 0)
+    {
+        var left = 34 + col * 40;
+        var top = 86 + row * 40;
+        return [left, top, left + 36, top + 36];
+    }
+    var left = 124 + col * 54;
+    var top = 105 + row * 34;
+    return [left, top, left + 32, top + 32];
+};
+codex_last_page = function()
+{
+    return max(0, ceil(array_length(codex_catalog[codex_category]) / codex_page_size()) - 1);
+};
+codex_select = function(_index)
+{
+    codex_selected = _index;
+    codex_page = _index div codex_page_size();
+};
+codex_set_category = function(_category)
+{
+    codex_category = (_category + array_length(codex_tabs)) mod array_length(codex_tabs);
+    codex_select(0);
+};
+codex_set_page = function(_page)
+{
+    codex_select(clamp(_page, 0, codex_last_page()) * codex_page_size());
+};
+
 if (!variable_global_exists("windmill_return")) global.windmill_return = undefined;
 if (!variable_global_exists("player_gold")) global.player_gold = 0;
 hovered_button = -1;
@@ -381,7 +431,8 @@ write_progress = function(_name, _files, _previous)
     var data = {
         version: 2, revision: revision, name: _name, saved_at: date_current_datetime(), room_name: room_get_name(room),
         x: player.x, y: player.y, facing: player.facing,
-        selected_slot: player.inventory_selected_slot, gold: global.player_gold, entrance: entrance
+        selected_slot: player.inventory_selected_slot, gold: global.player_gold, entrance: entrance,
+        codex_discovered: global.codex_discovered
     };
 
     // Write to the other slot so a failed write leaves the last valid save intact.
