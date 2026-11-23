@@ -1,3 +1,4 @@
+terrain_draw_crops();
 selection_active = false;
 selection_in_range = false;
 if (room != rm_main || view_camera[view_current] == -1) exit;
@@ -13,5 +14,11 @@ x = target.x;
 y = target.y;
 var previous_filter = gpu_get_texfilter();
 gpu_set_texfilter(false);
-draw_sprite_stretched(sprite_index, target.within_reach ? 0 : 1, target.x, target.y, target.width, target.height);
+var cells = terrain_tool_targets(player, target, false);
+for (var i = 0; i < array_length(cells); i++)
+{
+    var cell = cells[i];
+    draw_sprite_stretched(sprite_index, cell.can_interact ? 0 : 1,
+        cell.x, cell.y, cell.width, cell.height);
+}
 gpu_set_texfilter(previous_filter);

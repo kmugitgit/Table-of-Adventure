@@ -74,6 +74,20 @@ if (inventory_open)
     exit;
 }
 
+var area_change = keyboard_check_pressed(ord("C")) - keyboard_check_pressed(ord("V"));
+if (area_change != 0) inventory_adjust_tool_area(global.inventory_slots[inventory_selected_slot], area_change);
+
+if (tool_use_timer > 0) tool_use_timer--;
+if (mouse_check_button_pressed(mb_left) || mouse_check_button_pressed(mb_right))
+{
+    var layout = inventory_layout();
+    var over_hotbar = point_in_rectangle(device_mouse_x_to_gui(0), device_mouse_y_to_gui(0),
+        layout.x, layout.y, layout.x + layout.width * layout.scale, layout.y + layout.height * layout.scale);
+    var selector = instance_find(obj_tile_select, 0);
+    if (!over_hotbar && selector != noone)
+        terrain_use_tool(id, selector.pointer_target(id), mouse_check_button_pressed(mb_right));
+}
+
 if (keyboard_check_pressed(ord("F")))
 {
     var windmill = instance_nearest(x, y, obj_windmill);
@@ -141,6 +155,6 @@ if (move_x != 0 || move_y != 0)
     }
 }
 
-image_index = idle_frames[HeroFacing.Down];
+image_index = idle_frames[facing];
 // Keep the gait phase moving while idle so quick taps don't restart on the same pose.
 walk_phase = (walk_phase + walk_frames_per_step) mod walk_frame_count;

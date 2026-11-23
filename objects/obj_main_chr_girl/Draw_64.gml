@@ -3,6 +3,9 @@ if (room == rm_market) exit;
 var layout = inventory_layout();
 var frame_width = layout.width;
 var frame_height = layout.height;
+var hover_enabled = !instance_exists(obj_title_menu) || !obj_title_menu.gameplay_input_blocked;
+var local_mouse_x = (device_mouse_x_to_gui(0) - layout.x) / layout.scale;
+var local_mouse_y = (device_mouse_y_to_gui(0) - layout.y) / layout.scale;
 
 if (surface_exists(inventory_surface)
     && (surface_get_width(inventory_surface) != frame_width
@@ -65,13 +68,15 @@ for (var row = 0; row < layout.rows; row++)
         var slot_index = row * inventory_columns + column;
         var selected = slot_index == inventory_selected_slot;
         var moving = slot_index == inventory_move_source;
+        var hovered = hover_enabled && point_in_rectangle(local_mouse_x, local_mouse_y,
+            left, top, right, bottom);
 
         draw_set_color(moving ? palette.parchment : (selected ? palette.gold : palette.wood_highlight));
         draw_rectangle(left + 1, top, right - 1, bottom, false);
         draw_rectangle(left, top + 1, right, bottom - 1, false);
         draw_set_color(palette.shadow);
         draw_rectangle(left + 2, top + 2, right - 2, bottom - 2, false);
-        draw_set_color(selected ? palette.selected_well : palette.well);
+        draw_set_color(hovered ? palette.selected_well : palette.well);
         draw_rectangle(left + 3, top + 4, right - 3, bottom - 3, false);
 
         var slot = global.inventory_slots[slot_index];
@@ -79,6 +84,22 @@ for (var row = 0; row < layout.rows; row++)
         {
             var item = inventory_get_item(slot.id);
             codex_draw_item(item, [left + 3, top + 3, right - 3, bottom - 3], true);
+            if (item.kind == "tool" && item.tool_kind == "can")
+            {
+                var amount = inventory_water_amount(slot);
+                var gauge_left = left + 5;
+                var gauge_right = right - 5;
+                draw_set_color(palette.shadow);
+                draw_rectangle(gauge_left - 1, bottom - 7, gauge_right + 1, bottom - 2, false);
+                draw_set_color(make_color_rgb(29, 58, 83));
+                draw_rectangle(gauge_left, bottom - 6, gauge_right, bottom - 3, false);
+                if (amount > 0)
+                {
+                    draw_set_color(make_color_rgb(65, 165, 225));
+                    draw_rectangle(gauge_left, bottom - 6,
+                        gauge_left + (gauge_right - gauge_left) * amount / inventory_water_capacity(slot), bottom - 3, false);
+                }
+            }
             if (item.kind == "seed" && slot.quantity > 1)
             {
                 draw_set_font(inventory_quantity_font);
@@ -112,6 +133,38 @@ if (inventory_open)
 draw_surface_part_ext(inventory_surface, 0, 0, frame_width, frame_height,
     layout.x, layout.y, layout.scale, layout.scale, c_white, 1);
 
+// Keep current footprint/capacity readable without opening a menu.
+if (!inventory_open && (!instance_exists(obj_title_menu) || !obj_title_menu.gameplay_input_blocked))
+{
+    var active_slot = global.inventory_slots[inventory_selected_slot];
+    if (is_struct(active_slot))
+    {
+        var active_item = inventory_get_item(active_slot.id);
+        if (active_item.kind == "tool")
+        {
+            var status = "";
+            if (active_item.tool_kind == "can")
+                status = active_item.name + "  물 " + string(inventory_water_amount(active_slot))
+                    + "/" + string(inventory_water_capacity(active_slot));
+            else
+            {
+                var shape = inventory_tool_area_shape(active_slot);
+                status = active_item.name + "  " + string(shape.width) + "×" + string(shape.height)
+                    + "  [C 확대 / V 축소]";
+            }
+            draw_set_font(inventory_font);
+            draw_set_halign(fa_center);
+            draw_set_valign(fa_bottom);
+            draw_set_color(palette.shadow);
+            draw_text_transformed(display_get_gui_width() * 0.5 + layout.scale,
+                layout.y - 5 * layout.scale, status, layout.scale, layout.scale, 0);
+            draw_set_color(palette.parchment);
+            draw_text_transformed(display_get_gui_width() * 0.5,
+                layout.y - 6 * layout.scale, status, layout.scale, layout.scale, 0);
+        }
+    }
+}
+
 gpu_set_texfilter(previous_filter);
 draw_set_valign(previous_valign);
 draw_set_halign(previous_halign);
@@ -141,12 +194,10 @@ if (!inventory_open && !input_blocked && windmill != noone && windmill.player_at
     draw_set_font(inventory_font);
     draw_set_halign(fa_left);
     draw_set_valign(fa_top);
-    var key_pixels = 55;
-    var font_info = font_get_info(inventory_font);
-    var glyph = font_info.glyphs[$ "F"];
-    var glyph_scale = max(1, floor((key_pixels - 12) / glyph.h));
-    var glyph_x = floor((key_pixels - glyph.w * glyph_scale) * 0.5) - glyph.offset * glyph_scale;
-    var glyph_y = floor((key_pixels - glyph.h * glyph_scale) * 0.5) - glyph.yoffset * glyph_scale;
+    var key_pixels = interaction_key_size;
+    var glyph_scale = interaction_key_scale;
+    var glyph_x = interaction_key_x;
+    var glyph_y = interaction_key_y;
     var hint_left = screen_x * gui_per_pixel_x;
     var hint_top = screen_y * gui_per_pixel_y;
     var hint_right = (screen_x + key_pixels) * gui_per_pixel_x;

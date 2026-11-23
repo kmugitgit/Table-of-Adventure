@@ -18,7 +18,7 @@ function scr_market_catalog()
         [ // 농기구
             market_item("괭이", noone, "단단한 땅을 갈아\n이랑을 만들 때 씁니다.", 120, "hoe", make_color_rgb(165, 179, 177)),
             market_item("물뿌리개", noone, "씨앗과 작물에 물을\n고르게 뿌리는 도구입니다.", 140, "can", make_color_rgb(128, 164, 177)),
-            market_item("모종삽", noone, "작은 구덩이를 파거나\n모종을 옮길 때 씁니다.", 80, "trowel", make_color_rgb(171, 182, 178))
+            market_item("삽", noone, "작은 구덩이를 파거나\n모종을 옮길 때 씁니다.", 80, "trowel", make_color_rgb(171, 182, 178))
         ],
         [ // 업그레이드
             market_item("가방 확장", noone, "가방의 인벤토리 칸을\n한 줄 늘리는 업그레이드입니다.", 450, "bag", make_color_rgb(201, 151, 88))

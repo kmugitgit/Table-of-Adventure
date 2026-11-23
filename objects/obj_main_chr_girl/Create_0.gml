@@ -10,6 +10,9 @@ walk_phase = 0;
 move_speed = 70 / game_get_speed(gamespeed_fps);
 facing = HeroFacing.Down;
 
+tool_use_timer = 0;
+tool_use_duration = 1;
+tool_use_item_id = "";
 image_speed = 0;
 image_index = idle_frames[facing];
 
@@ -27,6 +30,7 @@ if (variable_global_exists("windmill_return") && is_struct(global.windmill_retur
 terrain_tilemap = -1;
 var terrain_layer = layer_get_id("Tiles");
 if (terrain_layer != -1) terrain_tilemap = layer_tilemap_get_id(terrain_layer);
+terrain_apply_changes(terrain_tilemap);
 terrain_keep_on_land(id);
 
 depth = -round(y + (sprite_get_bbox_bottom(sprite_index)
@@ -107,6 +111,17 @@ ini_close();
 var previous_font_aa = font_add_get_enable_aa();
 font_add_enable_aa(false);
 inventory_font = font_add("Galmuri14.ttf", 11, false, false, 32, 126);
+// font_get_info copies the whole font; cache the F prompt metrics once, not per draw.
+var interaction_font_info = font_get_info(inventory_font);
+var interaction_glyph = interaction_font_info.glyphs[$ "F"];
+interaction_key_size = 55;
+interaction_key_scale = max(1, floor((interaction_key_size - 12) / interaction_glyph.h));
+interaction_key_x = floor((interaction_key_size - interaction_glyph.w * interaction_key_scale) * 0.5)
+    - interaction_glyph.offset * interaction_key_scale;
+interaction_key_y = floor((interaction_key_size - interaction_glyph.h * interaction_key_scale) * 0.5)
+    - interaction_glyph.yoffset * interaction_key_scale;
+interaction_font_info = undefined;
+interaction_glyph = undefined;
 inventory_quantity_font = font_add("Galmuri14.ttf", 7, false, false, 32, 126);
 font_add_enable_aa(previous_font_aa);
 

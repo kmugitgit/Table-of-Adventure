@@ -9,8 +9,11 @@ if (!is_struct(pending_load)) exit;
 
 var data = pending_load;
 pending_load = undefined;
+game_clock_restore(variable_struct_get(data, "game_minutes"));
 codex_restore_history(variable_struct_get(data, "codex_discovered"));
 inventory_restore(variable_struct_get(data, "inventory"));
+terrain_restore_changes(variable_struct_get(data, "terrain_changes"));
+terrain_restore_crops(variable_struct_get(data, "planted_crops"));
 with (obj_market)
 {
     market_catalog = market_stock_catalog();
@@ -26,6 +29,7 @@ player.y = clamp(data.y, 0, room_height - 1);
 player.facing = clamp(round(data.facing), 0, array_length(player.idle_frames) - 1);
 player.image_index = player.idle_frames[player.facing];
 player.inventory_selected_slot = clamp(round(data.selected_slot), 0, player.inventory_columns - 1);
+terrain_apply_changes(player.terrain_tilemap);
 terrain_keep_on_land(player);
 player.depth = -round(player.y + (sprite_get_bbox_bottom(player.sprite_index)
     - sprite_get_yoffset(player.sprite_index)) * player.image_yscale);

@@ -1,6 +1,6 @@
 /// 인벤토리 및 구매 처리
 // 장비 가격은 상점의 기본 가격 × [나무, 구리, 철, 금, 티타늄] 배수입니다.
-// 슬롯에는 { id, quantity }만 저장하고, 표시 정보는 카탈로그에서 가져옵니다.
+// 슬롯에는 id, quantity, 물뿌리개 water, 괭이·삽의 area_level을 저장합니다.
 function inventory_seed_id(_seed)
 {
     return _seed.sprite != noone ? sprite_get_name(_seed.sprite) : "seed_" + _seed.name;
@@ -32,7 +32,8 @@ function inventory_initialize()
             var base_price = 0;
             for (var j = 0; j < array_length(market[1]); j++)
             {
-                if (market[1][j].icon == tool.tool_kind) base_price = market[1][j].price;
+                var kind = market[1][j].icon == "trowel" ? "shovel" : market[1][j].icon;
+                if (kind == tool.tool_kind) base_price = market[1][j].price;
             }
             tool.price = base_price * tier_prices[tool.tier];
             global.inventory_definitions[$ tool.id] = tool;
@@ -61,6 +62,8 @@ function inventory_reset()
     global.inventory_slots = array_create(27, undefined);
     global.player_gold = 10000;
     codex_restore_history(undefined);
+    global.terrain_changes = [];
+    global.planted_crops = [];
     inventory_grant_starter_tools();
 }
 
@@ -137,6 +140,8 @@ function inventory_purchase_error(_id)
         var current_tier = target == -1 ? -1 : inventory_get_item(global.inventory_slots[target].id).tier;
         if (item.tier != current_tier + 1) return "다음 단계 장비를 선택하세요.";
     }
+    if (item.kind == "seed" && inventory_seed_count(item.id) >= 99)
+        return "같은 작물의 씨앗은 최대 99개까지 보유할 수 있습니다.";
     if (global.player_gold < item.price) return "골드가 부족합니다.";
     if (item.kind == "bag") return "";
     if (item.kind == "seed") target = inventory_seed_slot(item.id);
@@ -168,7 +173,10 @@ function inventory_buy(_id)
         else
         {
             // A tool upgrade replaces the old tool in its current slot.
+            var water = item.kind == "tool" && item.tool_kind == "can"
+                && is_struct(global.inventory_slots[target]) ? inventory_water_amount(global.inventory_slots[target]) : 6;
             global.inventory_slots[target] = { id: item.id, quantity: 1 };
+            if (item.kind == "tool" && item.tool_kind == "can") global.inventory_slots[target].water = water;
             if (item.kind == "tool")
             {
                 for (var i = 0; i < array_length(global.inventory_slots); i++)
@@ -214,7 +222,14 @@ function inventory_snapshot()
     for (var i = 0; i < array_length(result); i++)
     {
         var slot = global.inventory_slots[i];
-        if (is_struct(slot)) result[i] = { id: slot.id, quantity: slot.quantity };
+        if (is_struct(slot))
+        {
+            result[i] = { id: slot.id, quantity: slot.quantity };
+            var item = inventory_get_item(slot.id);
+            if (item.kind == "tool" && item.tool_kind == "can") result[i].water = inventory_water_amount(slot);
+            if (item.kind == "tool" && (item.tool_kind == "hoe" || item.tool_kind == "shovel"))
+                result[i].area_level = inventory_tool_area_level(slot);
+        }
     }
     return result;
 }
@@ -243,6 +258,13 @@ function inventory_restore(_saved)
         global.inventory_slots[i] = {
             id: item_id, quantity: item.kind == "seed" ? floor(quantity) : 1
         };
+        if (item.kind == "tool" && item.tool_kind == "can")
+            global.inventory_slots[i].water = inventory_water_amount(saved);
+        if (item.kind == "tool" && (item.tool_kind == "hoe" || item.tool_kind == "shovel"))
+        {
+            var saved_area = variable_struct_get(saved, "area_level");
+            if (is_numeric(saved_area)) global.inventory_slots[i].area_level = clamp(floor(saved_area), 0, item.tier);
+        }
         codex_discover(item_id);
     }
     // Keep only the highest tier if an imported save contains duplicate tools.
@@ -272,7 +294,7 @@ function market_stock_catalog()
     var tier_ids = ["wood", "copper", "iron", "gold", "titanium"];
     for (var i = 0; i < array_length(base[1]); i++)
     {
-        var kind = base[1][i].icon;
+        var kind = base[1][i].icon == "trowel" ? "shovel" : base[1][i].icon;
         var owned_slot = inventory_tool_slot(kind);
         var tier = owned_slot == -1 ? 1 : inventory_get_item(global.inventory_slots[owned_slot].id).tier + 1;
         if (tier < array_length(tier_ids))
@@ -285,4 +307,79 @@ function market_stock_catalog()
     var bag = inventory_get_item("inventory_expansion");
     if (!is_undefined(bag)) array_push(upgrades, bag);
     return [seeds, tools, upgrades];
+}
+
+
+function inventory_water_capacity(_slot)
+{
+    var item = inventory_get_item(_slot.id);
+    var tier = !is_undefined(item) && item.kind == "tool" && item.tool_kind == "can"
+        ? clamp(item.tier, 0, 4) : 0;
+    var capacities = [6, 12, 18, 24, 36];
+    return capacities[tier];
+}
+
+function inventory_water_amount(_slot)
+{
+    var water = variable_struct_get(_slot, "water");
+    var capacity = inventory_water_capacity(_slot);
+    return is_numeric(water) ? clamp(floor(water), 0, capacity) : capacity;
+}
+
+
+function inventory_return_seed(_id)
+{
+    var item = inventory_get_item(_id);
+    if (is_undefined(item) || item.kind != "seed") return false;
+    if (inventory_seed_count(_id) >= 99) return false;
+    var slot = inventory_seed_slot(_id);
+    if (slot != -1) global.inventory_slots[slot].quantity++;
+    else
+    {
+        slot = inventory_empty_slot();
+        if (slot == -1) return false;
+        global.inventory_slots[slot] = { id: _id, quantity: 1 };
+    }
+    codex_discover(_id);
+    return true;
+}
+
+
+// Count all slots so moving items or importing duplicate stacks cannot bypass the cap.
+function inventory_seed_count(_id)
+{
+    var total = 0;
+    for (var i = 0; i < array_length(global.inventory_slots); i++)
+    {
+        var slot = global.inventory_slots[i];
+        if (is_struct(slot) && slot.id == _id) total += slot.quantity;
+    }
+    return total;
+}
+
+
+function inventory_tool_area_level(_slot)
+{
+    if (!is_struct(_slot)) return 0;
+    var item = inventory_get_item(_slot.id);
+    if (is_undefined(item) || item.kind != "tool" || (item.tool_kind != "hoe" && item.tool_kind != "shovel")) return 0;
+    var level = variable_struct_get(_slot, "area_level");
+    // Newly upgraded gear defaults to its largest unlocked footprint.
+    return is_numeric(level) ? clamp(floor(level), 0, item.tier) : item.tier;
+}
+
+function inventory_tool_area_shape(_slot)
+{
+    var level = inventory_tool_area_level(_slot);
+    var widths = [1, 1, 1, 3, 3];
+    var heights = [1, 2, 3, 2, 3];
+    return { width: widths[level], height: heights[level] };
+}
+
+function inventory_adjust_tool_area(_slot, _change)
+{
+    if (!is_struct(_slot)) return;
+    var item = inventory_get_item(_slot.id);
+    if (is_undefined(item) || item.kind != "tool" || (item.tool_kind != "hoe" && item.tool_kind != "shovel")) return;
+    _slot.area_level = clamp(inventory_tool_area_level(_slot) + _change, 0, item.tier);
 }

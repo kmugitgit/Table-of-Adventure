@@ -1,3 +1,4 @@
+draw_game_hud();
 if (item_book_open)
 {
     scr_item_book_draw(id);

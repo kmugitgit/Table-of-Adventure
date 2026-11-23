@@ -3,6 +3,7 @@ enum TitleMenuButton { New, Load, Settings, Exit, Count }
 enum SettingsSlider { Effects, Music, InterfaceSize }
 
 panel_surface = -1;
+game_hud_surface = -1;
 panel_font = -1;
 if (instance_number(obj_title_menu) > 1)
 {
@@ -27,6 +28,8 @@ item_book_selected_index = 0;
 item_book_dragging_scrollbar = false;
 item_book_scroll_drag_offset = 0;
 play_time_ms = 0;
+game_minutes = 6 * 60;
+game_minutes_per_second = 1;
 pending_load = undefined;
 menu_error = "";
 legacy_save_files = ["progress_a.json", "progress_b.json"];
@@ -438,12 +441,17 @@ write_progress = function(_name, _files, _previous)
         var point = global.windmill_return;
         entrance = { room_name: room_get_name(point.room_id), x: point.x, y: point.y };
     }
+    if (!variable_global_exists("terrain_changes")) global.terrain_changes = [];
+    if (!variable_global_exists("planted_crops")) global.planted_crops = [];
     var data = {
         version: 2, revision: revision, name: _name, saved_at: date_current_datetime(), room_name: room_get_name(room),
         x: player.x, y: player.y, facing: player.facing,
+        game_minutes: game_minutes,
         selected_slot: player.inventory_selected_slot, gold: global.player_gold, entrance: entrance,
         codex_discovered: global.codex_discovered,
-        inventory: inventory_snapshot()
+        inventory: inventory_snapshot(),
+        terrain_changes: global.terrain_changes,
+        planted_crops: global.planted_crops
     };
 
     // Write to the other slot so a failed write leaves the last valid save intact.
@@ -473,4 +481,98 @@ return_to_title = function()
 {
     global.windmill_return = undefined;
     room_goto(rm_title);
+};
+
+
+// One real second advances one game minute. Days roll over at midnight.
+game_clock_advance = function(_seconds)
+{
+    if (room == rm_title || menu_page != TitleMenuPage.Playing || gameplay_input_blocked || item_book_open) return;
+    game_minutes += max(0, _seconds) * game_minutes_per_second;
+};
+
+game_clock_restore = function(_saved)
+{
+    game_minutes = is_numeric(_saved) && _saved >= 0 && _saved < 1440 * 999999 ? _saved : 6 * 60;
+};
+
+game_clock_read = function()
+{
+    var whole_minutes = floor(game_minutes);
+    var minute_of_day = whole_minutes mod 1440;
+    var hours = minute_of_day div 60;
+    var minutes = minute_of_day mod 60;
+    return {
+        day: whole_minutes div 1440 + 1,
+        hours: hours, minutes: minutes,
+        time_text: (hours < 10 ? "0" : "") + string(hours) + ":"
+            + (minutes < 10 ? "0" : "") + string(minutes)
+    };
+};
+
+draw_game_hud = function()
+{
+    if (room != rm_main) return;
+    if (!surface_exists(game_hud_surface)) game_hud_surface = surface_create(216, 84);
+    if (!surface_exists(game_hud_surface)) return;
+    var old_filter = gpu_get_texfilter();
+    var old_colour = draw_get_color();
+    var old_alpha = draw_get_alpha();
+    var old_font = draw_get_font();
+    var old_halign = draw_get_halign();
+    var old_valign = draw_get_valign();
+    gpu_set_texfilter(false);
+    draw_set_alpha(1);
+    if (surface_set_target(game_hud_surface))
+    {
+        draw_clear_alpha(c_black, 0);
+        draw_set_color(make_color_rgb(31, 22, 18));
+        draw_rectangle(2, 3, 215, 83, false);
+        draw_set_color(make_color_rgb(163, 112, 61));
+        draw_rectangle(0, 0, 212, 80, false);
+        draw_set_color(make_color_rgb(76, 47, 29));
+        draw_rectangle(2, 2, 210, 78, false);
+        draw_set_color(make_color_rgb(98, 65, 39));
+        draw_rectangle(5, 5, 207, 75, false);
+        draw_set_color(make_color_rgb(119, 81, 46));
+        draw_line(7, 49, 205, 49);
+        draw_line(10, 72, 47, 72);
+        draw_line(154, 72, 202, 72);
+        draw_set_color(make_color_rgb(42, 56, 34));
+        draw_rectangle(7, 7, 205, 44, false);
+        draw_set_font(panel_font);
+        draw_set_valign(fa_middle);
+        draw_set_halign(fa_left);
+        draw_set_color(make_color_rgb(248, 224, 177));
+        var clock = game_clock_read();
+        draw_text(14, 26, string(clock.day) + "일차");
+        draw_set_halign(fa_right);
+        draw_text_transformed(199, 30, clock.time_text, 2, 2, 0);
+        draw_set_color(make_color_rgb(236, 188, 103));
+        draw_circle(17, 62, 5, false);
+        draw_set_color(make_color_rgb(255, 221, 131));
+        draw_line(16, 59, 16, 64);
+        draw_set_halign(fa_left);
+        draw_set_color(make_color_rgb(238, 214, 174));
+        draw_text(28, 63, "보유 골드");
+        draw_set_halign(fa_right);
+        draw_set_color(make_color_rgb(255, 220, 133));
+        var gold_label = string(global.player_gold) + " G";
+        var gold_scale = min(1, 111 / max(1, string_width(gold_label)));
+        draw_text_transformed(199, 63, gold_label, gold_scale, gold_scale, 0);
+        surface_reset_target();
+        var gui_width = display_get_gui_width();
+        var gui_height = display_get_gui_height();
+        var scale = min(gui_width / 960, gui_height / 540) * ui_percent / 100;
+        scale = min(scale, gui_width / 240, gui_height / 108);
+        var margin = max(6, round(12 * scale));
+        draw_surface_ext(game_hud_surface, round(gui_width - margin - 216 * scale), margin,
+            scale, scale, 0, c_white, 1);
+    }
+    gpu_set_texfilter(old_filter);
+    draw_set_color(old_colour);
+    draw_set_alpha(old_alpha);
+    draw_set_font(old_font);
+    draw_set_halign(old_halign);
+    draw_set_valign(old_valign);
 };

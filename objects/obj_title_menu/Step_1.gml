@@ -17,7 +17,11 @@ switch (menu_page)
             with (obj_main_chr_girl) inventory_close();
             menu_page = TitleMenuPage.Pause;
         }
-        else play_time_ms += delta_time / 1000;
+        else
+        {
+            play_time_ms += delta_time / 1000;
+            game_clock_advance(delta_time / 1000000);
+        }
         exit;
 
     case TitleMenuPage.Codex:
@@ -228,6 +232,8 @@ switch (menu_page)
                 if (over_control(load_row_bounds(i)))
                 {
                     pending_load = load_entries[index].data;
+                    terrain_restore_changes(variable_struct_get(pending_load, "terrain_changes"));
+                    global.planted_crops = [];
                     room_goto(asset_get_index(pending_load.room_name));
                     break;
                 }
@@ -258,6 +264,7 @@ switch (menu_page)
             {
                 case TitleMenuButton.New:
                     play_time_ms = 0;
+                    game_minutes = 6 * 60;
                     inventory_reset();
                     global.windmill_return = undefined;
                     room_goto(rm_main);
