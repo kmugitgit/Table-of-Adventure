@@ -12,8 +12,9 @@ function scr_market_catalog()
             market_item("헬라피뇨 씨앗", spr_seed_Hellapeno, "헬라피뇨를\n키울 수 있는 씨앗입니다.", 18, "seed", make_color_rgb(238, 145, 62)),
             market_item("구름감자 씨앗", spr_seed_CloudPotato, "구름감자를\n키울 수 있는 씨앗입니다.", 20, "seed", make_color_rgb(244, 191, 81)),
             market_item("얼음당근 씨앗", spr_seed_IceCarrot, "얼음당근을\n키울 수 있는 씨앗입니다.", 24, "seed", make_color_rgb(144, 178, 79)),
-            market_item("마그마토 씨앗", spr_seed_Magmato, "마그마토를\n키울 수 있는 씨앗입니다.", 28, "seed", make_color_rgb(198, 142, 91)),
-		],
+            market_item("마그마토 씨앗", spr_seed_Magmato, "마그마토를\n키울 수 있는 씨감자입니다.", 28, "seed", make_color_rgb(198, 142, 91))
+            
+        ],
         [ // 농기구
             market_item("괭이", noone, "단단한 땅을 갈아\n이랑을 만들 때 씁니다.", 120, "hoe", make_color_rgb(165, 179, 177)),
             market_item("물뿌리개", noone, "씨앗과 작물에 물을\n고르게 뿌리는 도구입니다.", 140, "can", make_color_rgb(128, 164, 177)),
@@ -33,7 +34,6 @@ function market_item(_name, _sprite, _description, _price, _icon = "seed", _acce
         description: _description,
         price: _price,
         icon: _icon,
-        accent: _accent,
-        colour: c_white
+        accent: _accent
     };
 }

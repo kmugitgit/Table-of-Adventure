@@ -1,3 +1,8 @@
+if (item_book_open)
+{
+    scr_item_book_draw(id);
+    exit;
+}
 if (menu_page == TitleMenuPage.Title || menu_page == TitleMenuPage.Playing) exit;
 
 var previous_filter = gpu_get_texfilter();

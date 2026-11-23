@@ -1,18 +1,16 @@
 var click = mouse_check_button_pressed(mb_left);
 var escape_pressed = keyboard_check_pressed(vk_escape);
 var pause_pressed = escape_pressed && room != rm_market;
-var codex_pressed = keyboard_check_pressed(ord("R"));
+var item_book_pressed = keyboard_check_pressed(ord("R"));
 var in_title = room == rm_title;
-gameplay_input_blocked = !in_title && (menu_page != TitleMenuPage.Playing || pause_pressed || codex_pressed);
+gameplay_input_blocked = !in_title && (menu_page != TitleMenuPage.Playing || pause_pressed || item_book_open || item_book_pressed);
 
 switch (menu_page)
 {
     case TitleMenuPage.Playing:
-        if (codex_pressed)
+        if (item_book_open || item_book_pressed)
         {
-            with (obj_main_chr_girl) inventory_close();
-            codex_catalog = scr_codex_catalog();
-            menu_page = TitleMenuPage.Codex;
+            scr_item_book_step(id);
         }
         else if (pause_pressed)
         {
@@ -23,7 +21,7 @@ switch (menu_page)
         exit;
 
     case TitleMenuPage.Codex:
-        if (codex_pressed || escape_pressed || (click && over_control(back_bounds)))
+        if (escape_pressed || (click && over_control(back_bounds)))
         {
             menu_page = TitleMenuPage.Playing;
             exit;

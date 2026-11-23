@@ -1,7 +1,12 @@
 /// 도감 항목과 획득 이력
 // 아이템을 얻는 코드에서 codex_discover(spr_seed_HeartBeet)를 호출하세요.
-// 농기구는 codex_discover("hoe_wood"), codex_discover("can_copper")처럼 기록합니다.
+// 농기구는 codex_discover("hoe_wood"), codex_discover("shovel_copper")처럼 기록합니다.
 // 단계 ID는 wood, copper, iron, gold, titanium 순서입니다.
+
+/// @func scr_item_book_entries()
+/// @desc 도감 아이템 목록. 새 항목을 추가할 때 아래 배열에 항목 구조체를 추가합니다.
+// 형식: {id, name, tag, sprite, description, effects, cultivated_land}
+// tag는 plant/condiment/meat/fish/food 중 하나이며 effects는 아이콘 데이터 최대 3개입니다.
 function codex_discover(_item)
 {
     var key = is_string(_item) ? _item : sprite_get_name(_item);
@@ -21,12 +26,14 @@ function codex_restore_history(_saved)
     for (var i = 0; i < min(array_length(_saved), 4096); i++)
     {
         var key = _saved[i];
+        if (is_string(key) && string_copy(key, 1, 7) == "trowel_")
+            key = "shovel_" + string_delete(key, 1, 7);
         if (is_string(key) && string_length(key) > 0 && string_length(key) <= 128)
             codex_discover(key);
     }
 }
 
-function scr_codex_catalog()
+function scr_item_book_catalog()
 {
     var market = scr_market_catalog();
     var seeds = market[0];
@@ -39,13 +46,14 @@ function scr_codex_catalog()
 
     var tier_names = ["나무", "구리", "철", "금", "티타늄"];
     var tier_ids = ["wood", "copper", "iron", "gold", "titanium"];
-    var tool_names = ["괭이", "물뿌리개", "모종삽"];
-    var tool_ids = ["hoe", "can", "trowel"];
+    var tool_names = ["괭이", "물뿌리개", "삽"];
+    // Keep IDs aligned with inventory and shop records (including existing saves).
+    var tool_ids = ["hoe", "can", "shovel"];
     var tool_sprites = [spr_hoe, spr_watering_can, spr_shovel];
     var tool_descriptions = [
-        "밭을 갈아 씨앗을 심을 땅을 만드는 농기구입니다.",
-        "씨앗과 작물에 물을 뿌리는 농기구입니다.",
-        "모종을 옮기거나 작은 구덩이를 파는 농기구입니다."
+        "땅을 갈아 경작지로 만듭니다.",
+        "땅에 물을 뿌려 젖게 만듭니다.",
+        "경작지를 땅으로 되돌리거나 작물을 씨앗으로 반환합니다."
     ];
     var tools = [];
     for (var tool = 0; tool < array_length(tool_names); tool++)
@@ -98,3 +106,4 @@ function codex_draw_item(_item, _bounds, _found)
         draw_ellipse(centre_x - 3, centre_y - 3, centre_x + 3, centre_y + 3, false);
     }
 }
+

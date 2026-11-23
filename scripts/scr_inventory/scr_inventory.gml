@@ -12,14 +12,14 @@ function inventory_initialize()
     {
         global.inventory_definitions = {};
         var market = scr_market_catalog();
-        var codex = scr_codex_catalog();
+        var codex = scr_item_book_catalog();
         for (var i = 0; i < array_length(codex[0]); i++)
         {
             var seed = codex[0][i];
             seed.kind = "seed";
             global.inventory_definitions[$ seed.id] = seed;
         }
-        var tool_ids = ["hoe", "can", "trowel"];
+        var tool_ids = ["hoe", "can", "shovel"];
         var tier_prices = [1, 2, 4, 8, 16];
         for (var i = 0; i < array_length(codex[1]); i++)
         {
@@ -66,7 +66,7 @@ function inventory_reset()
 
 function inventory_grant_starter_tools()
 {
-    var kinds = ["hoe", "can", "trowel"];
+    var kinds = ["hoe", "can", "shovel"];
     for (var tool = 0; tool < array_length(kinds); tool++)
     {
         if (inventory_tool_slot(kinds[tool]) != -1) continue;
@@ -236,6 +236,8 @@ function inventory_restore(_saved)
         var item_id = variable_struct_get(saved, "id");
         var quantity = variable_struct_get(saved, "quantity");
         if (!is_string(item_id) || !is_numeric(quantity) || quantity < 1) continue;
+        if (string_copy(item_id, 1, 7) == "trowel_")
+            item_id = "shovel_" + string_delete(item_id, 1, 7);
         var item = inventory_get_item(item_id);
         if (is_undefined(item) || item.kind == "bag") continue;
         global.inventory_slots[i] = {
@@ -244,7 +246,7 @@ function inventory_restore(_saved)
         codex_discover(item_id);
     }
     // Keep only the highest tier if an imported save contains duplicate tools.
-    var kinds = ["hoe", "can", "trowel"];
+    var kinds = ["hoe", "can", "shovel"];
     for (var tool = 0; tool < array_length(kinds); tool++)
     {
         var keep = inventory_tool_slot(kinds[tool]);

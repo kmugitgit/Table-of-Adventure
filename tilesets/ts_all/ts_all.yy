@@ -6,11 +6,11 @@
         6,29,24,39,23,43,26,46,28,31,42,44,38,45,47,41,2,19,18,21,5,22,27,37,10,33,34,36,7,30,25,40,14,8,1,17,
         9,32,11,35,3,20,13,4,15,12,16,
       ],},
-    {"$GMAutoTileSet":"","%Name":"soil","closed_edge":false,"name":"soil","resourceType":"GMAutoTileSet","resourceVersion":"2.0","tiles":[
+    {"$GMAutoTileSet":"","%Name":"dirt","closed_edge":false,"name":"dirt","resourceType":"GMAutoTileSet","resourceVersion":"2.0","tiles":[
         54,77,72,87,71,91,74,94,76,79,90,92,86,93,95,89,50,67,66,69,53,70,75,85,58,81,82,84,55,78,73,88,62,56,
         49,65,57,80,59,83,51,68,61,52,63,60,64,
       ],},
-    {"$GMAutoTileSet":"","%Name":"wet_soil","closed_edge":false,"name":"wet_soil","resourceType":"GMAutoTileSet","resourceVersion":"2.0","tiles":[
+    {"$GMAutoTileSet":"","%Name":"wet_dirt","closed_edge":false,"name":"wet_dirt","resourceType":"GMAutoTileSet","resourceVersion":"2.0","tiles":[
         102,125,120,135,119,139,122,142,124,127,138,140,134,141,143,137,98,115,114,117,101,118,123,133,106,129,
         130,132,103,126,121,136,110,104,97,113,105,128,107,131,99,116,109,100,111,108,112,
       ],},

@@ -4,7 +4,10 @@
   "isCompatibility":false,
   "isDnD":false,
   "name":"scr_terrain",
-  "parent":{"name":"Scripts","path":"folders/Scripts.yy",},
+  "parent":{
+    "name":"Scripts",
+    "path":"folders/Scripts.yy",
+  },
   "resourceType":"GMScript",
   "resourceVersion":"2.0",
 }

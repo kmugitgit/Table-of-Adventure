@@ -54,7 +54,7 @@ market_icons = {
         "....kkk...", "...k...k.k", ".kkkaak.kk", "klkaaalka.",
         "k.kaaakak.", "klkaaaakk.", ".kkaaalak.", "..ksaaaak.", "...kkkkk.."
     ],
-    trowel: [
+    shovel: [
         ".......kk.", "......klak", ".....klaak", "....klakak",
         "...kkakkk.", "..kbbk....", ".kbsk.....", "kbsk......", ".kk......."
     ],
