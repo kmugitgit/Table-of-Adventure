@@ -38,7 +38,8 @@ market_desc_bounds = [414, 213, 604, 273];
 market_price_bounds = [414, 286, 503, 325];
 market_buy_bounds = [515, 286, 604, 325];
 
-market_catalog = scr_market_catalog();
+market_catalog = market_stock_catalog();
+market_message = "";
 
 market_icons = {
     seed: [
@@ -135,6 +136,22 @@ market_select = function(_index)
     market_desc_scroll_max = 0;
 };
 
+market_purchase = function()
+{
+    var items = market_catalog[market_category];
+    if (array_length(items) == 0) return;
+    var error = inventory_buy(items[market_selected].id);
+    if (error != "")
+    {
+        market_message = error;
+        return;
+    }
+    market_message = "구매했습니다.";
+    market_catalog = market_stock_catalog();
+    var item_count = array_length(market_catalog[market_category]);
+    market_select(min(market_selected, max(0, item_count - 1)));
+};
+
 market_panel = function(_bounds, _fill, _edge)
 {
     var left = _bounds[0];
@@ -175,8 +192,9 @@ market_draw_icon = function(_item, _x, _y, _scale)
             : target_max / source_max;
         var icon_width = max(1, floor(source_width * scale));
         var icon_height = max(1, floor(source_height * scale));
-        draw_sprite_stretched(item_sprite, 0, round(_x - icon_width * 0.5),
-            round(_y - icon_height * 0.5), icon_width, icon_height);
+        var sprite_frame = variable_struct_exists(_item, "sprite_frame") ? _item.sprite_frame : 0;
+        draw_sprite_stretched_ext(item_sprite, sprite_frame, round(_x - icon_width * 0.5),
+            round(_y - icon_height * 0.5), icon_width, icon_height, _item.colour, 1);
         return;
     }
 

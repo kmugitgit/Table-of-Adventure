@@ -4,10 +4,12 @@ var layout = inventory_layout();
 var frame_width = layout.width;
 var frame_height = layout.height;
 
+if (surface_exists(inventory_surface)
+    && (surface_get_width(inventory_surface) != frame_width
+        || surface_get_height(inventory_surface) != layout.surface_height))
+    surface_free(inventory_surface);
 if (!surface_exists(inventory_surface))
-{
     inventory_surface = surface_create(frame_width, layout.surface_height);
-}
 if (!surface_exists(inventory_surface) || !surface_set_target(inventory_surface)) exit;
 
 var previous_colour = draw_get_color();
@@ -60,9 +62,11 @@ for (var row = 0; row < layout.rows; row++)
     {
         var left = inventory_padding + column * inventory_slot_step;
         var right = left + inventory_slot_size - 1;
-        var selected = row * inventory_columns + column == inventory_selected_slot;
+        var slot_index = row * inventory_columns + column;
+        var selected = slot_index == inventory_selected_slot;
+        var moving = slot_index == inventory_move_source;
 
-        draw_set_color(selected ? palette.gold : palette.wood_highlight);
+        draw_set_color(moving ? palette.parchment : (selected ? palette.gold : palette.wood_highlight));
         draw_rectangle(left + 1, top, right - 1, bottom, false);
         draw_rectangle(left, top + 1, right, bottom - 1, false);
         draw_set_color(palette.shadow);
@@ -70,6 +74,25 @@ for (var row = 0; row < layout.rows; row++)
         draw_set_color(selected ? palette.selected_well : palette.well);
         draw_rectangle(left + 3, top + 4, right - 3, bottom - 3, false);
 
+        var slot = global.inventory_slots[slot_index];
+        if (is_struct(slot))
+        {
+            var item = inventory_get_item(slot.id);
+            codex_draw_item(item, [left + 3, top + 3, right - 3, bottom - 3], true);
+            if (item.kind == "seed" && slot.quantity > 1)
+            {
+                draw_set_font(inventory_quantity_font);
+                draw_set_halign(fa_right);
+                draw_set_valign(fa_bottom);
+                draw_set_color(palette.shadow);
+                draw_text(right - 2, bottom - 1, string(slot.quantity));
+                draw_set_color(palette.parchment);
+                draw_text(right - 3, bottom - 2, string(slot.quantity));
+                draw_set_font(inventory_font);
+                draw_set_halign(fa_left);
+                draw_set_valign(fa_top);
+            }
+        }
         if (row == 0)
         {
             draw_set_color(selected ? palette.parchment : palette.muted);

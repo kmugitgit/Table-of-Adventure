@@ -10,8 +10,14 @@ if (!is_struct(pending_load)) exit;
 var data = pending_load;
 pending_load = undefined;
 codex_restore_history(variable_struct_get(data, "codex_discovered"));
+inventory_restore(variable_struct_get(data, "inventory"));
+with (obj_market)
+{
+    market_catalog = market_stock_catalog();
+    market_select(0);
+}
 var saved_gold = variable_struct_get(data, "gold");
-global.player_gold = is_numeric(saved_gold) && saved_gold >= 0 ? floor(saved_gold) : 0;
+global.player_gold = is_numeric(saved_gold) && saved_gold >= 0 ? floor(saved_gold) : 100;
 var player = instance_find(obj_main_chr_girl, 0);
 if (player == noone) exit;
 
@@ -20,6 +26,7 @@ player.y = clamp(data.y, 0, room_height - 1);
 player.facing = clamp(round(data.facing), 0, array_length(player.idle_frames) - 1);
 player.image_index = player.idle_frames[player.facing];
 player.inventory_selected_slot = clamp(round(data.selected_slot), 0, player.inventory_columns - 1);
+terrain_keep_on_land(player);
 player.depth = -round(player.y + (sprite_get_bbox_bottom(player.sprite_index)
     - sprite_get_yoffset(player.sprite_index)) * player.image_yscale);
 

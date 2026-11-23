@@ -128,9 +128,14 @@ draw_set_halign(fa_center);
 draw_set_color(market_gold);
 var price_label = is_undefined(selected_item) ? "-" : string(selected_item.price) + " G";
 draw_text(459, 307, market_fit_text(price_label, 79));
-market_button(market_buy_bounds, "구매", false, false);
-draw_set_color(market_muted);
-draw_text(560, 335, "준비 중");
+var can_buy = !is_undefined(selected_item) && inventory_purchase_error(selected_item.id) == "";
+var buy_label = !is_undefined(selected_item) && selected_item.kind == "tool" && selected_item.tier > 0
+    ? "업그레이드" : "구매";
+market_button(market_buy_bounds, buy_label, false, can_buy);
+
+draw_set_color(market_text);
+draw_set_halign(fa_center);
+draw_text(320, 350, market_message);
 
 surface_reset_target();
 draw_set_alpha(1);

@@ -260,8 +260,7 @@ switch (menu_page)
             {
                 case TitleMenuButton.New:
                     play_time_ms = 0;
-                    global.player_gold = 0;
-                    codex_restore_history(undefined);
+                    inventory_reset();
                     global.windmill_return = undefined;
                     room_goto(rm_main);
                     break;

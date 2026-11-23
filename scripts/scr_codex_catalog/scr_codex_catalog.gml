@@ -33,17 +33,12 @@ function scr_codex_catalog()
     for (var i = 0; i < array_length(seeds); i++)
     {
         var seed = seeds[i];
-        seed.id = seed.sprite != noone ? sprite_get_name(seed.sprite) : "seed_" + seed.name;
+        seed.id = inventory_seed_id(seed);
         seed.colour = c_white;
     }
 
     var tier_names = ["나무", "구리", "철", "금", "티타늄"];
     var tier_ids = ["wood", "copper", "iron", "gold", "titanium"];
-    var tier_colours = [
-        make_color_rgb(202, 165, 116), make_color_rgb(227, 151, 108),
-        make_color_rgb(220, 227, 232), make_color_rgb(255, 216, 104),
-        make_color_rgb(170, 214, 241)
-    ];
     var tool_names = ["괭이", "물뿌리개", "모종삽"];
     var tool_ids = ["hoe", "can", "trowel"];
     var tool_sprites = [spr_hoe, spr_watering_can, spr_shovel];
@@ -61,8 +56,9 @@ function scr_codex_catalog()
                 id: tool_ids[tool] + "_" + tier_ids[tier],
                 name: tier_names[tier] + " " + tool_names[tool],
                 sprite: tool_sprites[tool],
+                sprite_frame: tier,
                 description: tool_descriptions[tool],
-                colour: tier_colours[tier]
+                colour: c_white
             });
         }
     }
@@ -85,7 +81,8 @@ function codex_draw_item(_item, _bounds, _found)
         var previous_shader = shader_current();
         shader_set(sh_codex_grayscale);
         shader_set_uniform_f(shader_get_uniform(sh_codex_grayscale, "u_collected"), _found ? 1 : 0);
-        draw_sprite_stretched_ext(_item.sprite, 0, round(centre_x - icon_width * 0.5),
+        var sprite_frame = variable_struct_exists(_item, "sprite_frame") ? _item.sprite_frame : 0;
+        draw_sprite_stretched_ext(_item.sprite, sprite_frame, round(centre_x - icon_width * 0.5),
             round(centre_y - icon_height * 0.5), icon_width, icon_height, _item.colour, 1);
         if (previous_shader == -1) shader_reset();
         else shader_set(previous_shader);

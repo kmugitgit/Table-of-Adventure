@@ -5,6 +5,8 @@ if (room == rm_market || (instance_exists(obj_title_menu) && obj_title_menu.game
     exit;
 }
 
+inventory_rows = array_length(global.inventory_slots) div inventory_columns;
+
 if (keyboard_check_pressed(vk_tab))
 {
     if (inventory_open) inventory_close();
@@ -50,7 +52,17 @@ if (inventory_open)
                 var top = inventory_row_top(row, layout.first_top);
                 if (mouse_in_panel_y >= top && mouse_in_panel_y < top + inventory_slot_size)
                 {
-                    inventory_selected_slot = row * inventory_columns + column;
+                    var target_slot = row * inventory_columns + column;
+                    if (inventory_move_source != -1)
+                    {
+                        inventory_move(inventory_move_source, target_slot);
+                        inventory_move_source = -1;
+                    }
+                    else if (is_struct(global.inventory_slots[target_slot]))
+                    {
+                        inventory_move_source = target_slot;
+                    }
+                    inventory_selected_slot = target_slot;
                     break;
                 }
             }
@@ -109,7 +121,12 @@ if (move_x != 0 || move_y != 0)
     // Use only the hero's feet to test the solid tower, not the head or the rotor.
     var feet_y = next_y + (sprite_get_bbox_bottom(sprite_index) - origin_y) * image_yscale;
     var feet_half_width = 6 * abs(image_xscale);
-    if ((next_x != x || next_y != y) && collision_rectangle(
+    var current_feet_y = y + (sprite_get_bbox_bottom(sprite_index) - origin_y) * image_yscale;
+    var crosses_water = terrain_water_rectangle(terrain_tilemap,
+        min(x, next_x) - feet_half_width,
+        min(current_feet_y, feet_y) - 4 * abs(image_yscale),
+        max(x, next_x) + feet_half_width, max(current_feet_y, feet_y));
+    if (!crosses_water && (next_x != x || next_y != y) && collision_rectangle(
         next_x - feet_half_width, feet_y - 4 * abs(image_yscale),
         next_x + feet_half_width, feet_y, obj_windmill, false, true) == noone)
     {

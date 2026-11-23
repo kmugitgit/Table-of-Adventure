@@ -24,6 +24,11 @@ if (variable_global_exists("windmill_return") && is_struct(global.windmill_retur
     }
 }
 
+terrain_tilemap = -1;
+var terrain_layer = layer_get_id("Tiles");
+if (terrain_layer != -1) terrain_tilemap = layer_tilemap_get_id(terrain_layer);
+terrain_keep_on_land(id);
+
 depth = -round(y + (sprite_get_bbox_bottom(sprite_index)
     - sprite_get_yoffset(sprite_index)) * image_yscale);
 
@@ -44,9 +49,11 @@ if (room == rm_main && view_enabled && view_camera[0] != -1)
     });
 }
 
+inventory_initialize();
 inventory_open = false;
+inventory_move_source = -1;
 inventory_columns = 9;
-inventory_rows = 3;
+inventory_rows = array_length(global.inventory_slots) div inventory_columns;
 inventory_selected_slot = 0;
 inventory_surface = -1;
 inventory_slot_size = 42;
@@ -58,6 +65,7 @@ inventory_grid_top = 47;
 inventory_close = function()
 {
     inventory_open = false;
+    inventory_move_source = -1;
     inventory_selected_slot = inventory_selected_slot mod inventory_columns;
 };
 
@@ -68,6 +76,7 @@ inventory_row_top = function(_row, _first_top)
 
 inventory_layout = function()
 {
+    inventory_rows = array_length(global.inventory_slots) div inventory_columns;
     var gui_width = display_get_gui_width();
     var gui_height = display_get_gui_height();
     var scale = min(gui_width / 960, gui_height / 540) * inventory_scale;
@@ -77,6 +86,7 @@ inventory_layout = function()
     var height = inventory_row_top(rows - 1, first_top) + inventory_slot_size + inventory_padding;
     var surface_height = inventory_row_top(inventory_rows - 1, inventory_grid_top)
         + inventory_slot_size + inventory_padding;
+    scale = min(scale, gui_width / width, gui_height / height);
     return {
         x: round((gui_width - width * scale) * 0.5),
         y: round(gui_height - height * scale),
@@ -97,6 +107,7 @@ ini_close();
 var previous_font_aa = font_add_get_enable_aa();
 font_add_enable_aa(false);
 inventory_font = font_add("Galmuri14.ttf", 11, false, false, 32, 126);
+inventory_quantity_font = font_add("Galmuri14.ttf", 7, false, false, 32, 126);
 font_add_enable_aa(previous_font_aa);
 
 inventory_colors = {

@@ -68,6 +68,12 @@ if (market_desc_scroll_max > 0 && market_hit(market_desc_bounds))
     market_desc_scroll = clamp(market_desc_scroll + wheel * market_desc_line_spacing, 0, market_desc_scroll_max);
 }
 
+if (keyboard_check_pressed(vk_enter) || (click && market_hit(market_buy_bounds)))
+{
+    market_purchase();
+    exit;
+}
+
 if (!click) exit;
 
 for (var i = 0; i < visible_pages; i++)

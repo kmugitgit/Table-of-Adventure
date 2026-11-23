@@ -30,6 +30,7 @@ load_entries = [];
 load_page = 0;
 load_page_size = 4;
 delete_entry = undefined;
+inventory_initialize();
 codex_catalog = scr_codex_catalog();
 codex_tabs = ["씨앗", "농기구"];
 codex_tiers = ["나무", "구리", "철", "금", "티타늄"];
@@ -81,7 +82,7 @@ codex_set_page = function(_page)
 };
 
 if (!variable_global_exists("windmill_return")) global.windmill_return = undefined;
-if (!variable_global_exists("player_gold")) global.player_gold = 0;
+if (!variable_global_exists("player_gold")) global.player_gold = 100;
 hovered_button = -1;
 dragged_slider = -1;
 
@@ -432,7 +433,8 @@ write_progress = function(_name, _files, _previous)
         version: 2, revision: revision, name: _name, saved_at: date_current_datetime(), room_name: room_get_name(room),
         x: player.x, y: player.y, facing: player.facing,
         selected_slot: player.inventory_selected_slot, gold: global.player_gold, entrance: entrance,
-        codex_discovered: global.codex_discovered
+        codex_discovered: global.codex_discovered,
+        inventory: inventory_snapshot()
     };
 
     // Write to the other slot so a failed write leaves the last valid save intact.
