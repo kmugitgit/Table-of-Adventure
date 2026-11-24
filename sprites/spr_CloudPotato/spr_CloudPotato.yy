@@ -27,7 +27,7 @@
   "origin":4,
   "parent":{
     "name":"plant",
-    "path":"folders/Sprites/plant.yy",
+    "path":"folders/Sprites/plant/plant.yy",
   },
   "preMultiplyAlpha":false,
   "resourceType":"GMSprite",

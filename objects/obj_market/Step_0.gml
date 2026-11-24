@@ -1,6 +1,11 @@
 if (market_input_blocked()) exit;
 
 var click = mouse_check_button_pressed(mb_left);
+var buy_button_click = click && market_hit(market_buy_bounds);
+var buy_space_pressed = keyboard_check_pressed(vk_space);
+var buy_button_held = keyboard_check(vk_space)
+    || (mouse_check_button(mb_left) && market_hit(market_buy_bounds));
+var buy_delta = delta_time / 1000000;
 if (keyboard_check_pressed(vk_escape) || keyboard_check_pressed(ord("F"))
     || (click && market_hit(market_leave_bounds)))
 {
@@ -68,10 +73,30 @@ if (market_desc_scroll_max > 0 && market_hit(market_desc_bounds))
     market_desc_scroll = clamp(market_desc_scroll + wheel * market_desc_line_spacing, 0, market_desc_scroll_max);
 }
 
-if (keyboard_check_pressed(vk_enter) || (click && market_hit(market_buy_bounds)))
+if (buy_space_pressed || buy_button_click)
 {
     market_purchase();
+    market_buy_hold_time = 0;
+    market_buy_repeat_timer = 0.45;
     exit;
+}
+
+if (!buy_button_held)
+{
+    market_buy_hold_time = 0;
+    market_buy_repeat_timer = 0;
+}
+else
+{
+    market_buy_hold_time += buy_delta;
+    market_buy_repeat_timer -= buy_delta;
+    if (market_buy_repeat_timer <= 0)
+    {
+        market_purchase();
+        var repeat_interval = max(0.07, 0.25 - market_buy_hold_time * 0.15);
+        market_buy_repeat_timer += repeat_interval;
+        exit;
+    }
 }
 
 if (!click) exit;

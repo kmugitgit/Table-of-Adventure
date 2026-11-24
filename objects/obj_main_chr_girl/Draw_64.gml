@@ -67,11 +67,10 @@ for (var row = 0; row < layout.rows; row++)
         var right = left + inventory_slot_size - 1;
         var slot_index = row * inventory_columns + column;
         var selected = slot_index == inventory_selected_slot;
-        var moving = slot_index == inventory_move_source;
         var hovered = hover_enabled && point_in_rectangle(local_mouse_x, local_mouse_y,
             left, top, right, bottom);
 
-        draw_set_color(moving ? palette.parchment : (selected ? palette.gold : palette.wood_highlight));
+        draw_set_color(selected ? palette.gold : palette.wood_highlight);
         draw_rectangle(left + 1, top, right - 1, bottom, false);
         draw_rectangle(left, top + 1, right, bottom - 1, false);
         draw_set_color(palette.shadow);
@@ -100,7 +99,7 @@ for (var row = 0; row < layout.rows; row++)
                         gauge_left + (gauge_right - gauge_left) * amount / inventory_water_capacity(slot), bottom - 3, false);
                 }
             }
-            if (item.kind == "seed" && slot.quantity > 1)
+            if (inventory_item_stackable(item) && slot.quantity > 1)
             {
                 draw_set_font(inventory_quantity_font);
                 draw_set_halign(fa_right);
@@ -133,21 +132,16 @@ if (inventory_open)
 draw_surface_part_ext(inventory_surface, 0, 0, frame_width, frame_height,
     layout.x, layout.y, layout.scale, layout.scale, c_white, 1);
 
-// Keep current footprint/capacity readable without opening a menu.
-if (!inventory_open && (!instance_exists(obj_title_menu) || !obj_title_menu.gameplay_input_blocked))
+// Show the selected inventory item's name without adding tool-specific stats.
+if (!instance_exists(obj_title_menu) || !obj_title_menu.gameplay_input_blocked)
 {
     var active_slot = global.inventory_slots[inventory_selected_slot];
     if (is_struct(active_slot))
     {
         var active_item = inventory_get_item(active_slot.id);
-        if (active_item.kind == "tool")
+        if (!is_undefined(active_item) && variable_struct_exists(active_item, "name"))
         {
-            var shape = inventory_tool_area_shape(active_slot);
-            var status = active_item.name + "  " + string(shape.width) + "×" + string(shape.height);
-            if (active_item.tool_kind == "can")
-                status += "  물 " + string(inventory_water_amount(active_slot))
-                    + "/" + string(inventory_water_capacity(active_slot));
-            status += "  [Shift+휠 범위 변경]";
+            var status = active_item.name;
             draw_set_font(inventory_font);
             draw_set_halign(fa_center);
             draw_set_valign(fa_bottom);
@@ -157,6 +151,36 @@ if (!inventory_open && (!instance_exists(obj_title_menu) || !obj_title_menu.game
             draw_set_color(palette.parchment);
             draw_text_transformed(display_get_gui_width() * 0.5,
                 layout.y - 6 * layout.scale, status, layout.scale, layout.scale, 0);
+        }
+    }
+}
+
+// Draw the picked-up item just above and to the right of the pointer.
+if (inventory_open && is_struct(inventory_held_stack))
+{
+    var dragged_item = inventory_get_item(inventory_held_stack.id);
+    if (!is_undefined(dragged_item))
+    {
+        // Keep the carried sprite at a 32x32 source-pixel size, like slot icons.
+        var drag_size = 32 * layout.scale + 8;
+        var drag_left = device_mouse_x_to_gui(0) + 8 * layout.scale;
+        var drag_top = device_mouse_y_to_gui(0) - 38 * layout.scale;
+        codex_draw_item(dragged_item,
+            [drag_left, drag_top, drag_left + drag_size, drag_top + drag_size], true);
+        if (inventory_held_stack.quantity > 1)
+        {
+            var count_x = drag_left + 4 + 32 * layout.scale;
+            var count_y = drag_top + 4 + 32 * layout.scale;
+            var count_text = string(inventory_held_stack.quantity);
+            draw_set_font(inventory_quantity_font);
+            draw_set_halign(fa_right);
+            draw_set_valign(fa_bottom);
+            draw_set_color(palette.shadow);
+            draw_text_transformed(count_x + layout.scale, count_y + layout.scale,
+                count_text, layout.scale, layout.scale, 0);
+            draw_set_color(palette.parchment);
+            draw_text_transformed(count_x, count_y, count_text,
+                layout.scale, layout.scale, 0);
         }
     }
 }

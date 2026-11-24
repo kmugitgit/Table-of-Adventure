@@ -1,9 +1,9 @@
 {
   "$GMScript":"v1",
-  "%Name":"scr_market_catalog",
+  "%Name":"scr_market_entries",
   "isCompatibility":false,
   "isDnD":false,
-  "name":"scr_market_catalog",
+  "name":"scr_market_entries",
   "parent":{
     "name":"Scripts",
     "path":"folders/Scripts.yy",

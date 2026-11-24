@@ -9,7 +9,8 @@ if (menu_page == TitleMenuPage.Title)
     for (var i = 0; i < TitleMenuButton.Count; i++)
     {
         var row_y = button_y(i);
-        draw_sprite_ext(button_sprite, i, x, row_y, button_scale, button_scale, 0, c_white, 1);
+        var button_tint = i == hovered_button ? make_color_rgb(220, 220, 220) : c_white;
+        draw_sprite_ext(button_sprite, i, x, row_y, button_scale, button_scale, 0, button_tint, 1);
         if (i == hovered_button)
         {
             var marker_y = row_y + sprite_get_height(button_sprite) * button_scale * 0.5;

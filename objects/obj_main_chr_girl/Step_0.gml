@@ -1,7 +1,8 @@
 if (room == rm_market || (instance_exists(obj_title_menu) && obj_title_menu.gameplay_input_blocked))
 {
     walk_phase = 0;
-    image_index = idle_frames[facing];
+    image_index = idle_frames[(facing == HeroFacing.Left || facing == HeroFacing.Right)
+        ? HeroFacing.Down : facing];
     exit;
 }
 
@@ -47,39 +48,124 @@ if (inventory_open)
     selected_column = clamp(selected_column + direction_x, 0, inventory_columns - 1);
     inventory_selected_slot = selected_row * inventory_columns + selected_column;
 
-    if (mouse_check_button_pressed(mb_left))
+    var layout = inventory_layout();
+    var mouse_in_grid_x = (device_mouse_x_to_gui(0) - layout.x) / layout.scale - inventory_padding;
+    var mouse_in_panel_y = (device_mouse_y_to_gui(0) - layout.y) / layout.scale;
+    var column = floor(mouse_in_grid_x / inventory_slot_step);
+    var pointer_slot = -1;
+    if (column >= 0 && column < inventory_columns
+        && mouse_in_grid_x - column * inventory_slot_step < inventory_slot_size)
     {
-        var layout = inventory_layout();
-        var mouse_in_grid_x = (device_mouse_x_to_gui(0) - layout.x) / layout.scale - inventory_padding;
-        var mouse_in_panel_y = (device_mouse_y_to_gui(0) - layout.y) / layout.scale;
-        var column = floor(mouse_in_grid_x / inventory_slot_step);
-        if (column >= 0 && column < inventory_columns
-            && mouse_in_grid_x - column * inventory_slot_step < inventory_slot_size)
+        for (var row = 0; row < layout.rows; row++)
         {
-            for (var row = 0; row < layout.rows; row++)
+            var top = inventory_row_top(row, layout.first_top);
+            if (mouse_in_panel_y >= top && mouse_in_panel_y < top + inventory_slot_size)
             {
-                var top = inventory_row_top(row, layout.first_top);
-                if (mouse_in_panel_y >= top && mouse_in_panel_y < top + inventory_slot_size)
-                {
-                    var target_slot = row * inventory_columns + column;
-                    if (inventory_move_source != -1)
-                    {
-                        inventory_move(inventory_move_source, target_slot);
-                        inventory_move_source = -1;
-                    }
-                    else if (is_struct(global.inventory_slots[target_slot]))
-                    {
-                        inventory_move_source = target_slot;
-                    }
-                    inventory_selected_slot = target_slot;
-                    break;
-                }
+                pointer_slot = row * inventory_columns + column;
+                break;
             }
         }
     }
 
+    var left_pressed = mouse_check_button_pressed(mb_left);
+    var right_pressed = mouse_check_button_pressed(mb_right);
+    var left_released = mouse_check_button_released(mb_left);
+    var right_released = mouse_check_button_released(mb_right);
+    var has_held_item = is_struct(inventory_held_stack);
+    var double_click = left_pressed && pointer_slot == inventory_last_click_slot
+        && current_time - inventory_last_click_time <= 400
+        && has_held_item && inventory_held_stack.id == inventory_last_click_id;
+
+    if (pointer_slot >= 0 && (left_pressed || right_pressed))
+    {
+        inventory_selected_slot = pointer_slot;
+        var click_handled = false;
+        if (double_click)
+        {
+            inventory_collect_matching(id, inventory_last_click_id);
+            inventory_last_click_time = -1000;
+            inventory_last_click_slot = -1;
+            click_handled = true;
+        }
+        if (!click_handled && keyboard_check(vk_shift) && !has_held_item)
+        {
+            inventory_quick_move(pointer_slot);
+            inventory_last_click_time = -1000;
+            click_handled = true;
+        }
+        if (!click_handled && left_pressed)
+        {
+            if (has_held_item)
+            {
+                inventory_drag_mode = "left";
+                inventory_drag_slots = [pointer_slot];
+                inventory_drag_baseline = {
+                    id: inventory_held_stack.id,
+                    quantity: inventory_held_stack.quantity
+                };
+                inventory_drag_snapshots = [inventory_drag_snapshot(pointer_slot)];
+                inventory_last_click_time = -1000;
+            }
+            else
+            {
+                var clicked_stack = global.inventory_slots[pointer_slot];
+                if (is_struct(clicked_stack))
+                {
+                    inventory_last_click_slot = pointer_slot;
+                    inventory_last_click_id = clicked_stack.id;
+                    inventory_last_click_time = current_time;
+                    inventory_pickup(id, pointer_slot, false);
+                }
+                else inventory_last_click_time = -1000;
+            }
+        }
+        else if (!click_handled && right_pressed)
+        {
+            inventory_last_click_time = -1000;
+            inventory_last_click_slot = -1;
+            if (has_held_item)
+            {
+                inventory_drag_mode = "right";
+                inventory_drag_slots = [pointer_slot];
+                inventory_hold_right(id, pointer_slot);
+            }
+            else if (inventory_pickup(id, pointer_slot, true))
+            {
+                inventory_drag_mode = "right";
+                // The clicked stack was picked up; don't place back into that cell.
+                inventory_drag_slots = [pointer_slot];
+            }
+        }
+    }
+
+    if (inventory_drag_mode != "" && pointer_slot >= 0)
+        inventory_drag_add_slot(id, pointer_slot);
+
+    if (left_released && inventory_drag_mode == "left")
+    {
+        if (pointer_slot >= 0) inventory_drag_add_slot(id, pointer_slot);
+        if (array_length(inventory_drag_slots) > 1)
+        {
+            var dragged_item = inventory_get_item(inventory_drag_baseline.id);
+            if (!inventory_item_stackable(dragged_item))
+                inventory_distribute_held(id, inventory_drag_slots);
+        }
+        else if (array_length(inventory_drag_slots) == 1)
+            inventory_hold_left(id, inventory_drag_slots[0]);
+        inventory_drag_mode = "";
+        inventory_drag_slots = [];
+        inventory_drag_baseline = undefined;
+        inventory_drag_snapshots = [];
+    }
+    if (right_released && inventory_drag_mode == "right")
+    {
+        inventory_drag_mode = "";
+        inventory_drag_slots = [];
+    }
+
     walk_phase = 0;
-    image_index = idle_frames[facing];
+    image_index = idle_frames[(facing == HeroFacing.Left || facing == HeroFacing.Right)
+        ? HeroFacing.Down : facing];
     exit;
 }
 
@@ -175,6 +261,7 @@ if (move_x != 0 || move_y != 0)
     }
 }
 
-image_index = idle_frames[facing];
+image_index = idle_frames[(facing == HeroFacing.Left || facing == HeroFacing.Right)
+    ? HeroFacing.Down : facing];
 // Keep the gait phase moving while idle so quick taps don't restart on the same pose.
 walk_phase = (walk_phase + walk_frames_per_step) mod walk_frame_count;

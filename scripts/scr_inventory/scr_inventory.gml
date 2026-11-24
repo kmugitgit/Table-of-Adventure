@@ -11,7 +11,7 @@ function inventory_initialize()
     if (!variable_global_exists("inventory_definitions"))
     {
         global.inventory_definitions = {};
-        var market = scr_market_catalog();
+        var market_entries = scr_market_entries();
         var codex = scr_item_book_catalog();
         for (var i = 0; i < array_length(codex[0]); i++)
         {
@@ -27,30 +27,41 @@ function inventory_initialize()
             tool.kind = "tool";
             tool.tool_kind = tool_ids[i div 5];
             tool.tier = i mod 5;
-            tool.icon = tool.tool_kind;
-            tool.accent = tool.colour;
             var base_price = 0;
-            for (var j = 0; j < array_length(market[1]); j++)
+            var base_description = tool.description;
+            for (var j = 0; j < array_length(market_entries); j++)
             {
-                var kind = market[1][j].icon == "trowel" ? "shovel" : market[1][j].icon;
-                if (kind == tool.tool_kind) base_price = market[1][j].price;
+                var market_entry = market_entries[j];
+                if (market_entry.tab == "tool" && market_entry.id == tool.tool_kind)
+                {
+                    base_price = market_entry.price;
+                    base_description = market_entry.description;
+                }
             }
             tool.price = base_price * tier_prices[tool.tier];
+            tool.description = base_description;
             global.inventory_definitions[$ tool.id] = tool;
         }
-        for (var i = 0; i < array_length(market[2]); i++)
+        for (var i = 0; i < array_length(market_entries); i++)
         {
-            var upgrade = market[2][i];
-            if (upgrade.icon != "bag") continue;
+            var upgrade = market_entries[i];
+            if (upgrade.id != "inventory_expansion") continue;
             upgrade.id = "inventory_expansion";
             upgrade.kind = "bag";
-            upgrade.colour = c_white;
             global.inventory_definitions[$ upgrade.id] = upgrade;
+        }
+        for (var i = 0; i < array_length(market_entries); i++)
+        {
+            var extra_entry = market_entries[i];
+            if (extra_entry.tab != "item" && extra_entry.tab != "structure") continue;
+            extra_entry.kind = extra_entry.tab;
+            extra_entry.colour = c_white;
+            global.inventory_definitions[$ extra_entry.id] = extra_entry;
         }
     }
     if (!variable_global_exists("inventory_slots"))
     {
-        global.inventory_slots = array_create(27, undefined);
+        global.inventory_slots = array_create(18, undefined);
         inventory_grant_starter_tools();
     }
     if (!variable_global_exists("player_gold")) global.player_gold = 10000;
@@ -59,7 +70,7 @@ function inventory_initialize()
 function inventory_reset()
 {
     inventory_initialize();
-    global.inventory_slots = array_create(27, undefined);
+    global.inventory_slots = array_create(18, undefined);
     global.player_gold = 10000;
     codex_restore_history(undefined);
     global.terrain_changes = [];
@@ -117,14 +128,19 @@ function inventory_empty_slot()
     return -1;
 }
 
-function inventory_seed_slot(_id)
+function inventory_stack_slot(_id)
 {
     for (var i = 0; i < array_length(global.inventory_slots); i++)
     {
         var slot = global.inventory_slots[i];
-        if (is_struct(slot) && slot.id == _id) return i;
+        if (is_struct(slot) && slot.id == _id && slot.quantity < 99) return i;
     }
     return -1;
+}
+
+function inventory_seed_slot(_id)
+{
+    return inventory_stack_slot(_id);
 }
 
 function inventory_purchase_error(_id)
@@ -140,11 +156,15 @@ function inventory_purchase_error(_id)
         var current_tier = target == -1 ? -1 : inventory_get_item(global.inventory_slots[target].id).tier;
         if (item.tier != current_tier + 1) return "다음 단계 장비를 선택하세요.";
     }
-    if (item.kind == "seed" && inventory_seed_count(item.id) >= 99)
-        return "같은 작물의 씨앗은 최대 99개까지 보유할 수 있습니다.";
     if (global.player_gold < item.price) return "골드가 부족합니다.";
-    if (item.kind == "bag") return "";
-    if (item.kind == "seed") target = inventory_seed_slot(item.id);
+    if (item.kind == "bag")
+    {
+        if (array_length(global.inventory_slots) >= 45)
+            return "가방 확장은 최대 3회까지 구매할 수 있습니다.";
+        return "";
+    }
+    if (inventory_item_stackable(item)) target = inventory_stack_slot(item.id);
+    else if (item.kind == "tool") target = inventory_tool_slot(item.tool_kind);
     if (target == -1 && inventory_empty_slot() == -1) return "인벤토리가 가득 찼습니다.";
     return "";
 }
@@ -159,14 +179,17 @@ function inventory_buy(_id)
     if (item.kind == "bag")
     {
         var old_size = array_length(global.inventory_slots);
+        if (old_size >= 45) return "가방 확장은 최대 3회까지 구매할 수 있습니다.";
         array_resize(global.inventory_slots, old_size + 9);
         for (var i = old_size; i < old_size + 9; i++) global.inventory_slots[i] = undefined;
     }
     else
     {
-        var target = item.kind == "seed" ? inventory_seed_slot(item.id) : inventory_tool_slot(item.tool_kind);
+        var target = -1;
+        if (inventory_item_stackable(item)) target = inventory_stack_slot(item.id);
+        else if (item.kind == "tool") target = inventory_tool_slot(item.tool_kind);
         if (target == -1) target = inventory_empty_slot();
-        if (item.kind == "seed" && is_struct(global.inventory_slots[target]))
+        if (inventory_item_stackable(item) && is_struct(global.inventory_slots[target]))
         {
             global.inventory_slots[target].quantity++;
         }
@@ -203,10 +226,14 @@ function inventory_move(_source, _destination)
     var destination = global.inventory_slots[_destination];
     if (!is_struct(source)) return false;
     var item = inventory_get_item(source.id);
-    if (is_struct(destination) && source.id == destination.id && item.kind == "seed")
+    if (is_struct(destination) && source.id == destination.id
+        && inventory_item_stackable(item))
     {
-        destination.quantity += source.quantity;
-        global.inventory_slots[_source] = undefined;
+        var moved = min(99 - destination.quantity, source.quantity);
+        if (moved <= 0) return false;
+        destination.quantity += moved;
+        source.quantity -= moved;
+        if (source.quantity <= 0) global.inventory_slots[_source] = undefined;
     }
     else
     {
@@ -214,6 +241,337 @@ function inventory_move(_source, _destination)
         global.inventory_slots[_source] = destination;
     }
     return true;
+}
+
+function inventory_item_stackable(_item)
+{
+    return !is_undefined(_item) && _item.kind != "tool" && _item.kind != "bag";
+}
+
+function inventory_stack_add(_id, _quantity)
+{
+    var item = inventory_get_item(_id);
+    var stackable = inventory_item_stackable(item);
+    var remaining = max(0, floor(_quantity));
+    if (stackable)
+    {
+        for (var i = 0; i < array_length(global.inventory_slots) && remaining > 0; i++)
+        {
+            var slot = global.inventory_slots[i];
+            if (!is_struct(slot) || slot.id != _id || slot.quantity >= 99) continue;
+            var moved = min(99 - slot.quantity, remaining);
+            slot.quantity += moved;
+            remaining -= moved;
+        }
+    }
+    while (remaining > 0)
+    {
+        var empty = inventory_empty_slot();
+        if (empty == -1) break;
+        var placed = stackable ? min(99, remaining) : 1;
+        global.inventory_slots[empty] = { id: _id, quantity: placed };
+        remaining -= placed;
+    }
+    return remaining;
+}
+
+function inventory_quick_move(_source_index)
+{
+    if (_source_index < 0 || _source_index >= array_length(global.inventory_slots)) return false;
+    var source = global.inventory_slots[_source_index];
+    if (!is_struct(source)) return false;
+    var item = inventory_get_item(source.id);
+    if (is_undefined(item)) return false;
+    var stackable = inventory_item_stackable(item);
+    var first = _source_index < 9 ? 9 : 0;
+    var last = _source_index < 9 ? array_length(global.inventory_slots) : min(9, array_length(global.inventory_slots));
+    var remaining = source.quantity;
+    if (stackable)
+    {
+        for (var i = first; i < last && remaining > 0; i++)
+        {
+            var target = global.inventory_slots[i];
+            if (!is_struct(target) || target.id != source.id || target.quantity >= 99) continue;
+            var moved = min(99 - target.quantity, remaining);
+            target.quantity += moved;
+            remaining -= moved;
+        }
+    }
+    for (var i = first; i < last && remaining > 0; i++)
+    {
+        if (!is_undefined(global.inventory_slots[i])) continue;
+        var placed = stackable ? min(99, remaining) : 1;
+        global.inventory_slots[i] = { id: source.id, quantity: placed };
+        remaining -= placed;
+    }
+
+    // If the hotbar has no room, compact a quick-moved item to the first
+    // matching stack or empty cell in the main inventory, starting top-left.
+    if (_source_index >= 9 && remaining > 0)
+    {
+        if (stackable)
+        {
+            for (var i = 9; i < array_length(global.inventory_slots) && remaining > 0; i++)
+            {
+                if (i == _source_index) continue;
+                var target = global.inventory_slots[i];
+                if (!is_struct(target) || target.id != source.id || target.quantity >= 99) continue;
+                var moved = min(99 - target.quantity, remaining);
+                target.quantity += moved;
+                remaining -= moved;
+            }
+        }
+        for (var i = 9; i < array_length(global.inventory_slots) && remaining > 0; i++)
+        {
+            if (i == _source_index || !is_undefined(global.inventory_slots[i])) continue;
+            var placed = stackable ? min(99, remaining) : 1;
+            global.inventory_slots[i] = { id: source.id, quantity: placed };
+            remaining -= placed;
+        }
+    }
+    if (remaining == source.quantity) return false;
+    if (remaining <= 0) global.inventory_slots[_source_index] = undefined;
+    else source.quantity = remaining;
+    return true;
+}
+
+function inventory_pickup(_player, _slot_index, _take_half)
+{
+    if (_slot_index < 0 || _slot_index >= array_length(global.inventory_slots)) return false;
+    var slot = global.inventory_slots[_slot_index];
+    if (!is_struct(slot)) return false;
+    var item = inventory_get_item(slot.id);
+    if (is_undefined(item)) return false;
+    var quantity = slot.quantity;
+    if (_take_half && inventory_item_stackable(item) && quantity > 1)
+    {
+        quantity = ceil(quantity * 0.5);
+        slot.quantity -= quantity;
+    }
+    else global.inventory_slots[_slot_index] = undefined;
+    _player.inventory_held_stack = { id: slot.id, quantity: quantity };
+    _player.inventory_held_source = _slot_index;
+    return true;
+}
+
+function inventory_hold_left(_player, _slot_index)
+{
+    if (!is_struct(_player.inventory_held_stack)
+        || _slot_index < 0 || _slot_index >= array_length(global.inventory_slots)) return false;
+    var held = _player.inventory_held_stack;
+    var target = global.inventory_slots[_slot_index];
+    if (!is_struct(target))
+    {
+        global.inventory_slots[_slot_index] = held;
+        _player.inventory_held_stack = undefined;
+        _player.inventory_held_source = -1;
+        return true;
+    }
+    var held_item = inventory_get_item(held.id);
+    if (target.id == held.id && inventory_item_stackable(held_item))
+    {
+        var moved = min(99 - target.quantity, held.quantity);
+        if (moved <= 0) return false;
+        target.quantity += moved;
+        held.quantity -= moved;
+        if (held.quantity <= 0)
+        {
+            _player.inventory_held_stack = undefined;
+            _player.inventory_held_source = -1;
+        }
+        return true;
+    }
+    global.inventory_slots[_slot_index] = held;
+    _player.inventory_held_stack = target;
+    _player.inventory_held_source = _slot_index;
+    return true;
+}
+
+function inventory_hold_right(_player, _slot_index)
+{
+    if (!is_struct(_player.inventory_held_stack)
+        || _slot_index < 0 || _slot_index >= array_length(global.inventory_slots)) return false;
+    var held = _player.inventory_held_stack;
+    var item = inventory_get_item(held.id);
+    if (is_undefined(item)) return false;
+    var target = global.inventory_slots[_slot_index];
+    if (!inventory_item_stackable(item))
+    {
+        if (is_undefined(target)) return inventory_hold_left(_player, _slot_index);
+        return false;
+    }
+    if (is_undefined(target))
+    {
+        global.inventory_slots[_slot_index] = { id: held.id, quantity: 1 };
+    }
+    else if (target.id == held.id && target.quantity < 99)
+    {
+        target.quantity++;
+    }
+    else return false;
+    held.quantity--;
+    if (held.quantity <= 0)
+    {
+        _player.inventory_held_stack = undefined;
+        _player.inventory_held_source = -1;
+    }
+    return true;
+}
+
+function inventory_distribute_held(_player, _slot_indices)
+{
+    if (!is_struct(_player.inventory_held_stack) || array_length(_slot_indices) == 0) return false;
+    var held = _player.inventory_held_stack;
+    var item = inventory_get_item(held.id);
+    if (is_undefined(item)) return false;
+    if (!inventory_item_stackable(item)) return inventory_hold_left(_player, _slot_indices[0]);
+
+    var valid_slots = [];
+    var smallest_room = 99;
+    for (var i = 0; i < array_length(_slot_indices); i++)
+    {
+        var slot_index = _slot_indices[i];
+        var target = global.inventory_slots[slot_index];
+        if (is_undefined(target))
+        {
+            array_push(valid_slots, slot_index);
+        }
+        else if (target.id == held.id && target.quantity < 99)
+        {
+            array_push(valid_slots, slot_index);
+            smallest_room = min(smallest_room, 99 - target.quantity);
+        }
+    }
+    var count = array_length(valid_slots);
+    if (count == 0) return false;
+    var each = min(floor(held.quantity / count), smallest_room);
+    if (each <= 0) return false;
+    for (var i = 0; i < count; i++)
+    {
+        var slot_index = valid_slots[i];
+        var target = global.inventory_slots[slot_index];
+        if (is_undefined(target)) global.inventory_slots[slot_index] = { id: held.id, quantity: each };
+        else target.quantity += each;
+    }
+    held.quantity -= each * count;
+    if (held.quantity <= 0)
+    {
+        _player.inventory_held_stack = undefined;
+        _player.inventory_held_source = -1;
+    }
+    return true;
+}
+
+function inventory_collect_matching(_player, _id)
+{
+    if (!is_struct(_player.inventory_held_stack) || _player.inventory_held_stack.id != _id) return false;
+    var item = inventory_get_item(_id);
+    if (!inventory_item_stackable(item)) return false;
+    var held = _player.inventory_held_stack;
+    var remaining_capacity = max(0, 99 - held.quantity);
+    // Prefer scattered, incomplete stacks; only collect full 99-stacks last.
+    for (var pass = 0; pass < 2 && remaining_capacity > 0; pass++)
+    {
+        for (var i = 0; i < array_length(global.inventory_slots) && remaining_capacity > 0; i++)
+        {
+            var slot = global.inventory_slots[i];
+            if (!is_struct(slot) || slot.id != _id) continue;
+            var is_full_stack = slot.quantity >= 99;
+            if ((pass == 0 && is_full_stack) || (pass == 1 && !is_full_stack)) continue;
+            var moved = min(slot.quantity, remaining_capacity);
+            slot.quantity -= moved;
+            held.quantity += moved;
+            remaining_capacity -= moved;
+            if (slot.quantity <= 0) global.inventory_slots[i] = undefined;
+        }
+    }
+    return true;
+}
+
+function inventory_drag_snapshot(_slot_index)
+{
+    var slot = global.inventory_slots[_slot_index];
+    if (!is_struct(slot)) return { index: _slot_index, occupied: false };
+    return {
+        index: _slot_index,
+        occupied: true,
+        id: slot.id,
+        quantity: slot.quantity
+    };
+}
+
+function inventory_drag_restore_preview(_player)
+{
+    if (!is_struct(_player.inventory_drag_baseline)) return;
+    for (var i = 0; i < array_length(_player.inventory_drag_snapshots); i++)
+    {
+        var snapshot = _player.inventory_drag_snapshots[i];
+        if (snapshot.occupied)
+            global.inventory_slots[snapshot.index] = { id: snapshot.id, quantity: snapshot.quantity };
+        else global.inventory_slots[snapshot.index] = undefined;
+    }
+    _player.inventory_held_stack = {
+        id: _player.inventory_drag_baseline.id,
+        quantity: _player.inventory_drag_baseline.quantity
+    };
+}
+
+function inventory_drag_add_slot(_player, _slot_index)
+{
+    if (_slot_index < 0 || array_contains(_player.inventory_drag_slots, _slot_index)) return false;
+    if (_player.inventory_drag_mode == "left")
+    {
+        var item = inventory_get_item(_player.inventory_drag_baseline.id);
+        if (inventory_item_stackable(item))
+        {
+            inventory_drag_restore_preview(_player);
+            array_push(_player.inventory_drag_snapshots, inventory_drag_snapshot(_slot_index));
+        }
+        array_push(_player.inventory_drag_slots, _slot_index);
+        if (inventory_item_stackable(item) && array_length(_player.inventory_drag_slots) > 1)
+            inventory_distribute_held(_player, _player.inventory_drag_slots);
+    }
+    else if (_player.inventory_drag_mode == "right")
+    {
+        array_push(_player.inventory_drag_slots, _slot_index);
+        inventory_hold_right(_player, _slot_index);
+    }
+    return true;
+}
+
+function inventory_cancel_hold(_player)
+{
+    if (!is_struct(_player.inventory_held_stack)) return;
+    var held = _player.inventory_held_stack;
+    var source_index = _player.inventory_held_source;
+    if (source_index >= 0 && source_index < array_length(global.inventory_slots))
+    {
+        var source = global.inventory_slots[source_index];
+        if (is_undefined(source))
+        {
+            global.inventory_slots[source_index] = held;
+            _player.inventory_held_stack = undefined;
+            _player.inventory_held_source = -1;
+            return;
+        }
+        if (is_struct(source) && source.id == held.id)
+        {
+            var item = inventory_get_item(held.id);
+            if (inventory_item_stackable(item))
+            {
+                var moved = min(99 - source.quantity, held.quantity);
+                source.quantity += moved;
+                held.quantity -= moved;
+            }
+        }
+    }
+    var left = inventory_stack_add(held.id, held.quantity);
+    if (left <= 0)
+    {
+        _player.inventory_held_stack = undefined;
+        _player.inventory_held_source = -1;
+    }
+    else held.quantity = left;
 }
 
 function inventory_snapshot()
@@ -236,7 +594,9 @@ function inventory_snapshot()
 function inventory_restore(_saved)
 {
     inventory_initialize();
-    var count = is_array(_saved) ? max(27, ceil(array_length(_saved) / 9) * 9) : 27;
+    // Keep every slot from an existing save; new inventories start with two rows.
+    var count = is_array(_saved)
+        ? max(18, ceil(array_length(_saved) / 9) * 9) : 18;
     global.inventory_slots = array_create(count, undefined);
     if (!is_array(_saved))
     {
@@ -254,16 +614,23 @@ function inventory_restore(_saved)
             item_id = "shovel_" + string_delete(item_id, 1, 7);
         var item = inventory_get_item(item_id);
         if (is_undefined(item) || item.kind == "bag") continue;
-        global.inventory_slots[i] = {
-            id: item_id, quantity: item.kind == "seed" ? floor(quantity) : 1
-        };
-        if (item.kind == "tool" && item.tool_kind == "can")
-            global.inventory_slots[i].water = inventory_water_amount(saved);
-        if (item.kind == "tool")
+        var restore_slot = -1;
+        if (inventory_item_stackable(item))
+        {
+            inventory_stack_add(item_id, floor(quantity));
+        }
+        else
+        {
+            restore_slot = inventory_empty_slot();
+            if (restore_slot != -1) global.inventory_slots[restore_slot] = { id: item_id, quantity: 1 };
+        }
+        if (item.kind == "tool" && item.tool_kind == "can" && restore_slot != -1)
+            global.inventory_slots[restore_slot].water = inventory_water_amount(saved);
+        if (item.kind == "tool" && restore_slot != -1)
         {
             var saved_area = variable_struct_get(saved, "area_level");
             if (is_numeric(saved_area))
-                global.inventory_slots[i].area_level = clamp(floor(saved_area), 0, item.tier);
+                global.inventory_slots[restore_slot].area_level = clamp(floor(saved_area), 0, item.tier);
         }
         codex_discover(item_id);
     }
@@ -286,27 +653,69 @@ function inventory_restore(_saved)
 function market_stock_catalog()
 {
     inventory_initialize();
-    var base = scr_market_catalog();
+    var base = scr_market_entries();
     var seeds = [];
-    for (var i = 0; i < array_length(base[0]); i++)
-        array_push(seeds, inventory_get_item(inventory_seed_id(base[0][i])));
     var tools = [];
+    var items = [];
+    var structures = [];
     var tier_ids = ["wood", "copper", "iron", "gold", "titanium"];
-    for (var i = 0; i < array_length(base[1]); i++)
+    var tier_names = ["나무", "구리", "철", "금", "티타늄"];
+    for (var i = 0; i < array_length(base); i++)
     {
-        var kind = base[1][i].icon == "trowel" ? "shovel" : base[1][i].icon;
-        var owned_slot = inventory_tool_slot(kind);
-        var tier = owned_slot == -1 ? 1 : inventory_get_item(global.inventory_slots[owned_slot].id).tier + 1;
-        if (tier < array_length(tier_ids))
+        var entry = base[i];
+        if (entry.tab == "seed")
         {
-            var next = inventory_get_item(kind + "_" + tier_ids[tier]);
-            if (!is_undefined(next)) array_push(tools, next);
+            var seed = inventory_get_item(entry.id);
+            if (!is_undefined(seed)) array_push(seeds, seed);
+        }
+        else if (entry.id == "inventory_expansion")
+        {
+            var bag = inventory_get_item(entry.id);
+            if (!is_undefined(bag)) array_push(tools, bag);
+        }
+        else if (entry.tab == "tool")
+        {
+            var kind = entry.id;
+            var owned_slot = inventory_tool_slot(kind);
+            var tier = owned_slot == -1 ? 1 : inventory_get_item(global.inventory_slots[owned_slot].id).tier + 1;
+            if (tier < array_length(tier_ids))
+            {
+                var next = inventory_get_item(kind + "_" + tier_ids[tier]);
+                if (!is_undefined(next))
+                {
+                    var market_tool = {
+                        id: next.id,
+                        name: tier_names[tier] + " " + entry.name,
+                        tab: entry.tab,
+                        sprite: entry.sprite != noone ? entry.sprite : next.sprite,
+                        sprite_frame: variable_struct_exists(entry, "sprite_frame")
+                            ? entry.sprite_frame : next.sprite_frame,
+                        description: entry.description,
+                        price: next.price,
+                        kind: next.kind,
+                        tier: next.tier
+                    };
+                    array_push(tools, market_tool);
+                }
+            }
+        }
+        else if (entry.tab == "item")
+        {
+            var market_item_entry = inventory_get_item(entry.id);
+            if (!is_undefined(market_item_entry)) array_push(items, market_item_entry);
+        }
+        else if (entry.tab == "structure")
+        {
+            var market_structure_entry = inventory_get_item(entry.id);
+            if (!is_undefined(market_structure_entry)) array_push(structures, market_structure_entry);
+        }
+        else
+        {
+            var fallback_market_entry = inventory_get_item(entry.id);
+            if (!is_undefined(fallback_market_entry)) array_push(items, fallback_market_entry);
         }
     }
-    var upgrades = [];
-    var bag = inventory_get_item("inventory_expansion");
-    if (!is_undefined(bag)) array_push(upgrades, bag);
-    return [seeds, tools, upgrades];
+    return [seeds, tools, items, structures];
 }
 
 
@@ -331,7 +740,6 @@ function inventory_return_seed(_id)
 {
     var item = inventory_get_item(_id);
     if (is_undefined(item) || item.kind != "seed") return false;
-    if (inventory_seed_count(_id) >= 99) return false;
     var slot = inventory_seed_slot(_id);
     if (slot != -1) global.inventory_slots[slot].quantity++;
     else
@@ -345,7 +753,7 @@ function inventory_return_seed(_id)
 }
 
 
-// Count all slots so moving items or importing duplicate stacks cannot bypass the cap.
+// Count all stacks of one seed across every inventory slot.
 function inventory_seed_count(_id)
 {
     var total = 0;

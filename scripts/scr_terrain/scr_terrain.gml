@@ -385,7 +385,9 @@ function terrain_draw_crops()
 // Shared by the cursor colour and click handling, including stale cursor targets.
 function terrain_item_allows_tile(_item, _index)
 {
-    if (terrain_family(_index) != 3) return true;
+    var family = terrain_family(_index);
+    if (_item.kind == "seed") return family == 4 || family == 5;
+    if (family != 3) return true;
     return _item.kind == "tool" && _item.tool_kind == "can";
 }
 
@@ -413,7 +415,7 @@ function terrain_tool_targets(_player, _target, _refill)
         {
             var anchor_family = terrain_family(tile_get_index(tilemap_get(
                 _player.terrain_tilemap, anchor.column, anchor.row)));
-            if (anchor_family == 4 || anchor_family == 5) shovel_mode = 1; // Farmland to dirt.
+            if (anchor_family == 4 || anchor_family == 5) shovel_mode = 1; // Dirt farmland to dirt.
             else if (anchor_family == 1 || anchor_family == 2) shovel_mode = 2; // Dirt to grass.
         }
     }

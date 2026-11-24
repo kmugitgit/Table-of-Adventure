@@ -1,7 +1,10 @@
 var click = mouse_check_button_pressed(mb_left);
 var escape_pressed = keyboard_check_pressed(vk_escape);
+// The menu controller persists while the player visits the market. Never let a
+// stale codex state or the R shortcut draw the codex over the shop.
+if (room == rm_market) item_book_open = false;
 var pause_pressed = escape_pressed && room != rm_market;
-var item_book_pressed = keyboard_check_pressed(ord("R"));
+var item_book_pressed = room == rm_main && keyboard_check_pressed(ord("R"));
 var in_title = room == rm_title;
 gameplay_input_blocked = !in_title && (menu_page != TitleMenuPage.Playing || pause_pressed || item_book_open || item_book_pressed);
 

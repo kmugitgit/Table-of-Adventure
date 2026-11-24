@@ -26,7 +26,7 @@
   "origin":0,
   "parent":{
     "name":"seed",
-    "path":"folders/Sprites/seed.yy",
+    "path":"folders/Sprites/plant/seed.yy",
   },
   "preMultiplyAlpha":false,
   "resourceType":"GMSprite",

@@ -35,7 +35,8 @@ selection_target = function(_player, _mouse_room_x, _mouse_room_y)
     return {
         column: mouse_col, row: mouse_row,
         within_reach: within_reach,
-        can_interact: within_reach && terrain_item_allows_tile(item, tile_index),
+        can_interact: within_reach && terrain_item_allows_tile(item, tile_index)
+            && (item.kind != "seed" || terrain_crop_index(mouse_col, mouse_row) == -1),
         x: tile_x,
         y: tile_y,
         width: tile_width, height: tile_height

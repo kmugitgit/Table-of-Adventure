@@ -35,13 +35,15 @@ function codex_restore_history(_saved)
 
 function scr_item_book_catalog()
 {
-    var market = scr_market_catalog();
-    var seeds = market[0];
-    for (var i = 0; i < array_length(seeds); i++)
+    var market_entries = scr_market_entries();
+    var seeds = [];
+    for (var i = 0; i < array_length(market_entries); i++)
     {
-        var seed = seeds[i];
+        var seed = market_entries[i];
+        if (seed.tab != "seed") continue;
         seed.id = inventory_seed_id(seed);
         seed.colour = c_white;
+        array_push(seeds, seed);
     }
 
     var tier_names = ["나무", "구리", "철", "금", "티타늄"];

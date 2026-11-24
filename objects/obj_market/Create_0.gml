@@ -29,10 +29,11 @@ market_green = make_color_rgb(77, 84, 49);
 market_green_dark = make_color_rgb(55, 61, 37);
 market_green_light = make_color_rgb(111, 114, 66);
 
-market_tabs = ["씨앗", "농기구", "업그레이드"];
-market_tab_bounds = [[30, 14, 130, 46], [138, 14, 238, 46], [246, 14, 366, 46]];
-market_wallet_bounds = [380, 14, 516, 40];
-market_leave_bounds = [524, 14, 621, 40];
+market_tabs = ["씨앗", "도구", "소모품", "구조물"];
+market_tab_bounds = [[24, 14, 112, 46], [118, 14, 206, 46],
+    [212, 14, 300, 46], [306, 14, 394, 46]];
+market_wallet_bounds = [410, 14, 510, 40];
+market_leave_bounds = [518, 14, 621, 40];
 market_preview_bounds = [414, 71, 604, 203];
 market_desc_bounds = [414, 213, 604, 273];
 market_price_bounds = [414, 286, 503, 325];
@@ -40,36 +41,8 @@ market_buy_bounds = [515, 286, 604, 325];
 
 market_catalog = market_stock_catalog();
 market_message = "";
-
-market_icons = {
-    seed: [
-        "..kkkkkk..", ".kllllllk.", ".kbddddbk.", ".kbdadabk.", ".kbaaaabk.",
-        ".kbdadabk.", ".kbddddbk.", ".kbbbbbsk.", ".ksbssssk.", "..kkkkkk.."
-    ],
-    hoe: [
-        "......kkk.", ".....kllak", "....kbbakk", "...kbbkaak",
-        "..kbbk.kk.", ".kbbk.....", "kbbk......", "kbk.......", ".k........"
-    ],
-    can: [
-        "....kkk...", "...k...k.k", ".kkkaak.kk", "klkaaalka.",
-        "k.kaaakak.", "klkaaaakk.", ".kkaaalak.", "..ksaaaak.", "...kkkkk.."
-    ],
-    shovel: [
-        ".......kk.", "......klak", ".....klaak", "....klakak",
-        "...kkakkk.", "..kbbk....", ".kbsk.....", "kbsk......", ".kk......."
-    ],
-    bag: [
-        "....kk....", "...k..k...", "..kkkkkk..", ".klalaaak.", "klalalaask",
-        "kssbbssssk", "kaabbaaask", "kalallaask", "ksssssbbsk", ".kkkkkkkk."
-    ]
-};
-market_icon_colors = {
-    k: make_color_rgb(36, 27, 23),
-    l: make_color_rgb(249, 224, 170),
-    b: make_color_rgb(180, 125, 73),
-    d: make_color_rgb(226, 178, 111),
-    s: make_color_rgb(103, 66, 46)
-};
+market_buy_hold_time = 0;
+market_buy_repeat_timer = 0;
 
 market_scale = function()
 {
@@ -179,40 +152,23 @@ market_button = function(_bounds, _label, _selected, _enabled)
 
 market_draw_icon = function(_item, _x, _y, _scale)
 {
+    // Items without an assigned sprite have no icon in the shop.
+    if (!is_struct(_item) || !variable_struct_exists(_item, "sprite")) return;
     var item_sprite = _item.sprite;
-    if (item_sprite != noone && sprite_exists(item_sprite))
-    {
-        var source_width = sprite_get_width(item_sprite);
-        var source_height = sprite_get_height(item_sprite);
-        // Prefer integer enlargement so pixel art keeps consistent pixel sizes.
-        var source_max = max(source_width, source_height);
-        var target_max = 11 * _scale;
-        var scale = target_max >= source_max
-            ? max(1, round(target_max / source_max))
-            : target_max / source_max;
-        var icon_width = max(1, floor(source_width * scale));
-        var icon_height = max(1, floor(source_height * scale));
-        var sprite_frame = variable_struct_exists(_item, "sprite_frame") ? _item.sprite_frame : 0;
-        draw_sprite_stretched_ext(item_sprite, sprite_frame, round(_x - icon_width * 0.5),
-            round(_y - icon_height * 0.5), icon_width, icon_height, _item.colour, 1);
-        return;
-    }
-
-    var pattern = variable_struct_get(market_icons, _item.icon);
-    var left = round(_x) - 5 * _scale;
-    var top = round(_y) - floor(array_length(pattern) * _scale / 2);
-    for (var row = 0; row < array_length(pattern); row++)
-    {
-        for (var col = 0; col < string_length(pattern[row]); col++)
-        {
-            var pixel = string_char_at(pattern[row], col + 1);
-            if (pixel == ".") continue;
-            var colour = pixel == "a" ? _item.accent : variable_struct_get(market_icon_colors, pixel);
-            draw_set_color(colour);
-            draw_rectangle(left + col * _scale, top + row * _scale,
-                left + (col + 1) * _scale, top + (row + 1) * _scale, false);
-        }
-    }
+    if (item_sprite == noone || !sprite_exists(item_sprite)) return;
+    var source_width = sprite_get_width(item_sprite);
+    var source_height = sprite_get_height(item_sprite);
+    // Prefer integer enlargement so pixel art keeps consistent pixel sizes.
+    var source_max = max(source_width, source_height);
+    var target_max = 11 * _scale;
+    var scale = target_max >= source_max
+        ? max(1, round(target_max / source_max))
+        : target_max / source_max;
+    var icon_width = max(1, floor(source_width * scale));
+    var icon_height = max(1, floor(source_height * scale));
+    var sprite_frame = variable_struct_exists(_item, "sprite_frame") ? _item.sprite_frame : 0;
+    draw_sprite_stretched_ext(item_sprite, sprite_frame, round(_x - icon_width * 0.5),
+        round(_y - icon_height * 0.5), icon_width, icon_height, c_white, 1);
 };
 
 market_fit_text = function(_text, _width)

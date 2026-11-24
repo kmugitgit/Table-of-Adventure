@@ -18,11 +18,11 @@
         150,173,168,183,167,187,170,190,172,175,186,188,182,189,191,185,146,163,162,165,149,166,171,181,154,
         177,178,180,151,174,169,184,158,152,145,161,153,176,155,179,147,164,157,148,159,156,160,
       ],},
-    {"$GMAutoTileSet":"","%Name":"farmland","closed_edge":false,"name":"farmland","resourceType":"GMAutoTileSet","resourceVersion":"2.0","tiles":[
+    {"$GMAutoTileSet":"","%Name":"dirt_farmland","closed_edge":false,"name":"dirt_farmland","resourceType":"GMAutoTileSet","resourceVersion":"2.0","tiles":[
         198,221,216,231,215,235,218,238,220,223,234,236,230,237,239,233,194,211,210,213,197,214,219,229,202,
         225,226,228,199,222,217,232,206,200,193,209,201,224,203,227,195,212,205,196,207,204,208,
       ],},
-    {"$GMAutoTileSet":"","%Name":"wet_farmland","closed_edge":false,"name":"wet_farmland","resourceType":"GMAutoTileSet","resourceVersion":"2.0","tiles":[
+    {"$GMAutoTileSet":"","%Name":"wet_dirt_farmland","closed_edge":false,"name":"wet_dirt_farmland","resourceType":"GMAutoTileSet","resourceVersion":"2.0","tiles":[
         246,269,264,279,263,283,266,286,268,271,282,284,278,285,287,281,242,259,258,261,245,262,267,277,250,
         273,274,276,247,270,265,280,254,248,241,257,249,272,251,275,243,260,253,244,255,252,256,
       ],},

@@ -56,21 +56,36 @@ if (room == rm_main && view_enabled && view_camera[0] != -1)
 
 inventory_initialize();
 inventory_open = false;
-inventory_move_source = -1;
+inventory_held_stack = undefined;
+inventory_held_source = -1;
+inventory_drag_mode = "";
+inventory_drag_slots = [];
+inventory_drag_baseline = undefined;
+inventory_drag_snapshots = [];
+inventory_last_click_slot = -1;
+inventory_last_click_id = "";
+inventory_last_click_time = -1000;
 inventory_columns = 9;
 inventory_rows = array_length(global.inventory_slots) div inventory_columns;
 inventory_selected_slot = 0;
 inventory_surface = -1;
-inventory_slot_size = 42;
-inventory_slot_step = 46;
+inventory_slot_size = 48;
+inventory_slot_step = 52;
 inventory_padding = 12;
-inventory_row_gap = 10;
+inventory_row_gap = 8;
 inventory_grid_top = 47;
 
 inventory_close = function()
 {
+    if (is_struct(inventory_drag_baseline)) inventory_drag_restore_preview(id);
+    inventory_cancel_hold(id);
+    inventory_drag_mode = "";
+    inventory_drag_slots = [];
+    inventory_drag_baseline = undefined;
+    inventory_drag_snapshots = [];
+    inventory_last_click_slot = -1;
+    inventory_last_click_time = -1000;
     inventory_open = false;
-    inventory_move_source = -1;
     inventory_selected_slot = inventory_selected_slot mod inventory_columns;
 };
 
