@@ -48,14 +48,16 @@ function scr_item_book_catalog()
 
     var tier_names = ["나무", "구리", "철", "금", "티타늄"];
     var tier_ids = ["wood", "copper", "iron", "gold", "titanium"];
-    var tool_names = ["괭이", "물뿌리개", "삽"];
+    var tool_names = ["괭이", "물뿌리개", "삽", "낫", "낚싯대"];
     // Keep IDs aligned with inventory and shop records (including existing saves).
-    var tool_ids = ["hoe", "can", "shovel"];
-    var tool_sprites = [spr_hoe, spr_watering_can, spr_shovel];
+    var tool_ids = ["hoe", "can", "shovel", "sickle", "rod"];
+    var tool_sprites = [spr_hoe, spr_watering_can, spr_shovel, spr_sickle, fishing_rod];
     var tool_descriptions = [
         "땅을 갈아 경작지로 만듭니다.",
         "땅에 물을 뿌려 젖게 만듭니다.",
-        "경작지를 땅으로 되돌리거나 작물을 씨앗으로 반환합니다."
+        "경작지를 땅으로 되돌리거나 작물을 씨앗으로 반환합니다.",
+        "다 자란 작물을 수확하는 농기구입니다.",
+        "물에 찌를 던져 물고기를 잡는 도구입니다."
     ];
     var tools = [];
     for (var tool = 0; tool < array_length(tool_names); tool++)
@@ -107,5 +109,6 @@ function codex_draw_item(_item, _bounds, _found)
         draw_set_color(_found ? _item.accent : make_color_rgb(105, 105, 105));
         draw_ellipse(centre_x - 3, centre_y - 3, centre_x + 3, centre_y + 3, false);
     }
+    if (_found) farming_draw_quality_badge(_item, _bounds);
 }
 

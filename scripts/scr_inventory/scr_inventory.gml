@@ -19,7 +19,7 @@ function inventory_initialize()
             seed.kind = "seed";
             global.inventory_definitions[$ seed.id] = seed;
         }
-        var tool_ids = ["hoe", "can", "shovel"];
+        var tool_ids = ["hoe", "can", "shovel", "sickle", "rod"];
         var tier_prices = [1, 2, 4, 8, 16];
         for (var i = 0; i < array_length(codex[1]); i++)
         {
@@ -58,7 +58,9 @@ function inventory_initialize()
             extra_entry.colour = c_white;
             global.inventory_definitions[$ extra_entry.id] = extra_entry;
         }
+        fishing_register_items();
     }
+    if (!variable_struct_exists(global.inventory_definitions, "crop_HeartBeet_normal")) farming_register_items();
     if (!variable_global_exists("inventory_slots"))
     {
         global.inventory_slots = array_create(18, undefined);
@@ -80,7 +82,7 @@ function inventory_reset()
 
 function inventory_grant_starter_tools()
 {
-    var kinds = ["hoe", "can", "shovel"];
+    var kinds = ["hoe", "can", "shovel", "sickle"];
     for (var tool = 0; tool < array_length(kinds); tool++)
     {
         if (inventory_tool_slot(kinds[tool]) != -1) continue;
@@ -635,7 +637,7 @@ function inventory_restore(_saved)
         codex_discover(item_id);
     }
     // Keep only the highest tier if an imported save contains duplicate tools.
-    var kinds = ["hoe", "can", "shovel"];
+    var kinds = ["hoe", "can", "shovel", "sickle", "rod"];
     for (var tool = 0; tool < array_length(kinds); tool++)
     {
         var keep = inventory_tool_slot(kinds[tool]);
@@ -677,7 +679,7 @@ function market_stock_catalog()
         {
             var kind = entry.id;
             var owned_slot = inventory_tool_slot(kind);
-            var tier = owned_slot == -1 ? 1 : inventory_get_item(global.inventory_slots[owned_slot].id).tier + 1;
+            var tier = owned_slot == -1 ? (kind == "rod" ? 0 : 1) : inventory_get_item(global.inventory_slots[owned_slot].id).tier + 1;
             if (tier < array_length(tier_ids))
             {
                 var next = inventory_get_item(kind + "_" + tier_ids[tier]);
@@ -778,6 +780,8 @@ function inventory_tool_area_level(_slot)
 
 function inventory_tool_area_shape(_slot)
 {
+    var item = is_struct(_slot) ? inventory_get_item(_slot.id) : undefined;
+    if (!is_undefined(item) && item.kind == "tool" && item.tool_kind == "rod") return { width: 1, height: 1 };
     var size = inventory_tool_area_level(_slot) + 1;
     return { width: size, height: size };
 }
@@ -786,6 +790,6 @@ function inventory_adjust_tool_area(_slot, _change)
 {
     if (!is_struct(_slot) || _change == 0) return;
     var item = inventory_get_item(_slot.id);
-    if (is_undefined(item) || item.kind != "tool") return;
+    if (is_undefined(item) || item.kind != "tool" || item.tool_kind == "rod") return;
     _slot.area_level = clamp(inventory_tool_area_level(_slot) + sign(_change), 0, item.tier);
 }

@@ -237,3 +237,5 @@ if (!inventory_open && !input_blocked && windmill != noone && windmill.player_at
     draw_set_alpha(previous_alpha);
     draw_set_color(previous_colour);
 }
+
+fishing_draw_gui(id);

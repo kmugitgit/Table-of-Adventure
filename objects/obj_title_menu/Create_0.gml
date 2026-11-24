@@ -489,6 +489,7 @@ game_clock_advance = function(_seconds)
 {
     if (room == rm_title || menu_page != TitleMenuPage.Playing || gameplay_input_blocked || item_book_open) return;
     game_minutes += max(0, _seconds) * game_minutes_per_second;
+    farming_advance(max(0, _seconds) * game_minutes_per_second);
 };
 
 game_clock_restore = function(_saved)

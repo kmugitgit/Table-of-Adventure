@@ -145,7 +145,7 @@ function terrain_use_tool_cell(_player, _target, _refill)
     {
         var family = terrain_family(index);
         if ((family != 4 && family != 5) || terrain_crop_index(_target.column, _target.row) != -1) return false;
-        array_push(global.planted_crops, { column: _target.column, row: _target.row, seed_id: slot.id });
+        array_push(global.planted_crops, farming_new_crop(_target.column, _target.row, slot.id, family == 5));
         slot.quantity--;
         if (slot.quantity <= 0) global.inventory_slots[_player.inventory_selected_slot] = undefined;
         return true;
@@ -155,6 +155,10 @@ function terrain_use_tool_cell(_player, _target, _refill)
     {
         if (item.tool_kind != "can" || index < 145 || index > 191) return false;
         slot.water = inventory_water_capacity(slot);
+    }
+    else if (item.tool_kind == "sickle")
+    {
+        if (!farming_harvest(terrain_crop_index(_target.column, _target.row))) return false;
     }
     else if (item.tool_kind == "hoe")
     {
@@ -166,6 +170,7 @@ function terrain_use_tool_cell(_player, _target, _refill)
         var water = inventory_water_amount(slot);
         if (water <= 0 || index < 193 || index > 239) return false;
         terrain_change_cell(map, _target.column, _target.row, index + 48);
+        farming_water_crop(_target.column, _target.row);
     }
     else if (item.tool_kind == "shovel")
     {
@@ -203,8 +208,9 @@ function terrain_held_tool_pose(_player, _item)
     var hand_y = _player.y + 9 * abs(_player.image_yscale);
     var is_shovel = _item.tool_kind == "shovel";
     var is_can = _item.tool_kind == "can";
-    var handle_x = is_shovel ? 24 : (is_can ? 11 : 8);
-    var handle_y = is_shovel ? 8 : (is_can ? 15 : 24);
+    var is_rod = _item.tool_kind == "rod";
+    var handle_x = is_rod ? 5 : (is_shovel ? 24 : (is_can ? 11 : 8));
+    var handle_y = is_rod ? 27 : (is_shovel ? 8 : (is_can ? 15 : 24));
     var swing = 0;
     if (_player.tool_use_timer > 0 && _player.tool_use_item_id == _item.id)
     {
@@ -243,6 +249,17 @@ function terrain_held_tool_pose(_player, _item)
     }
     // The shovel source points opposite to the hoe. Mirror the swing with the hand.
     var tool_angle = (is_shovel ? 180 : 0) + swing * mirror;
+    if (is_rod && fishing_busy(_player))
+    {
+        var action = _player.fishing;
+        if (action.state == "casting")
+        {
+            var profile = global.fishing_rods[action.rod_tier];
+            var progress = clamp(action.elapsed / max(0.1, profile.cast_seconds), 0, 1);
+            tool_angle += -35 * sin(progress * pi) * mirror;
+        }
+        else if (action.state == "challenge") tool_angle += sin(action.elapsed * 8) * 3 * mirror;
+    }
     var grip_offset_x = (sprite_get_xoffset(_item.sprite) - handle_x) * tool_scale * mirror;
     var grip_offset_y = (sprite_get_yoffset(_item.sprite) - handle_y) * tool_scale;
     var cosine = dcos(tool_angle);
@@ -355,7 +372,7 @@ function terrain_restore_crops(_saved)
         if (col != floor(col) || row != floor(row) || col < 0 || row < 0 || col >= 160 || row >= 90) continue;
         var item = inventory_get_item(seed);
         if (is_undefined(item) || item.kind != "seed" || terrain_crop_index(col, row) != -1) continue;
-        array_push(global.planted_crops, { column: col, row: row, seed_id: seed });
+        array_push(global.planted_crops, farming_restore_crop(crop, col, row, seed));
     }
 }
 
@@ -368,16 +385,17 @@ function terrain_draw_crops()
     for (var i = 0; i < array_length(global.planted_crops); i++)
     {
         var crop = global.planted_crops[i];
-        var item = inventory_get_item(crop.seed_id);
-        var sprite = asset_get_index(string_replace(crop.seed_id, "spr_seed_", "spr_"));
-        if (!sprite_exists(sprite)) sprite = item.sprite;
+        var definition = farming_definition(crop.seed_id);
+        var sprite = definition.growth_sprite;
         if (!sprite_exists(sprite)) continue;
-        var size = min(tilemap_get_tile_width(map), tilemap_get_tile_height(map)) * 0.75;
-        var scale = size / max(sprite_get_width(sprite), sprite_get_height(sprite));
+        var scale = tilemap_get_tile_width(map) / sprite_get_width(sprite);
         var px = tilemap_get_x(map) + (crop.column + 0.5) * tilemap_get_tile_width(map);
-        var py = tilemap_get_y(map) + (crop.row + 0.5) * tilemap_get_tile_height(map);
-        draw_sprite_stretched(sprite, 0, px - sprite_get_width(sprite) * scale / 2,
-            py - sprite_get_height(sprite) * scale / 2, sprite_get_width(sprite) * scale, sprite_get_height(sprite) * scale);
+        var ground_y = tilemap_get_y(map) + (crop.row + 1) * tilemap_get_tile_height(map);
+        // A fixed ground anchor keeps all five growth frames planted in the same place.
+        draw_sprite_ext(sprite, farming_growth_frame(crop),
+            px - (sprite_get_width(sprite) * 0.5 - sprite_get_xoffset(sprite)) * scale,
+            ground_y - (sprite_get_bbox_bottom(sprite) + 1 - sprite_get_yoffset(sprite)) * scale,
+            scale, scale, 0, c_white, 1);
     }
 }
 
@@ -387,6 +405,7 @@ function terrain_item_allows_tile(_item, _index)
 {
     var family = terrain_family(_index);
     if (_item.kind == "seed") return family == 4 || family == 5;
+    if (_item.kind == "tool" && _item.tool_kind == "rod") return family == 3;
     if (family != 3) return true;
     return _item.kind == "tool" && _item.tool_kind == "can";
 }
@@ -464,6 +483,10 @@ function terrain_tool_targets(_player, _target, _refill)
 
 function terrain_use_tool(_player, _target, _refill)
 {
+    var active_slot = global.inventory_slots[_player.inventory_selected_slot];
+    var active_item = is_struct(active_slot) ? inventory_get_item(active_slot.id) : undefined;
+    if (!is_undefined(active_item) && active_item.kind == "tool" && active_item.tool_kind == "rod")
+        return !_refill && fishing_cast(_player, _target);
     var cells = terrain_tool_targets(_player, _target, _refill);
     var changed = false;
     for (var i = 0; i < array_length(cells); i++)

@@ -70,6 +70,22 @@ function scr_market_entries()
             price: 80
         },
         {
+            id: "sickle",
+            name: "낫",
+            tab: "tool",
+            sprite: noone,
+            description: "다 자란 작물을 베어 수확합니다.",
+            price: 100
+        },
+        {
+            id: "rod",
+            name: "낚싯대",
+            tab: "tool",
+            sprite: noone,
+            description: "물에 좌클릭으로 찌를 던집니다.\n입질이 오면 표시된 WASD를 순서대로 누르세요.",
+            price: 180
+        },
+        {
             id: "inventory_expansion",
             name: "가방 확장",
             tab: "tool",

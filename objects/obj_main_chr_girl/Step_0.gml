@@ -1,12 +1,19 @@
 if (room == rm_market || (instance_exists(obj_title_menu) && obj_title_menu.gameplay_input_blocked))
 {
     walk_phase = 0;
-    facing = HeroFacing.Down;
+    if (!fishing_busy(id)) facing = HeroFacing.Down;
     image_index = idle_frames[facing];
     exit;
 }
 
 if (tool_cooldown_timer > 0) tool_cooldown_timer--;
+
+if (fishing_handle_input(id))
+{
+    walk_phase = 0;
+    image_index = idle_frames[facing];
+    exit;
+}
 
 inventory_rows = array_length(global.inventory_slots) div inventory_columns;
 
@@ -192,6 +199,13 @@ if (mouse_check_button_pressed(mb_left) || mouse_check_button_pressed(mb_right))
             tool_cooldown_timer = max(1, round(game_get_speed(gamespeed_fps) * cooldown_seconds));
         }
     }
+}
+
+if (fishing_busy(id))
+{
+    walk_phase = 0;
+    image_index = idle_frames[facing];
+    exit;
 }
 
 if (keyboard_check_pressed(ord("F")))
