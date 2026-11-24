@@ -1,8 +1,8 @@
 if (room == rm_market || (instance_exists(obj_title_menu) && obj_title_menu.gameplay_input_blocked))
 {
     walk_phase = 0;
-    image_index = idle_frames[(facing == HeroFacing.Left || facing == HeroFacing.Right)
-        ? HeroFacing.Down : facing];
+    facing = HeroFacing.Down;
+    image_index = idle_frames[facing];
     exit;
 }
 
@@ -164,8 +164,8 @@ if (inventory_open)
     }
 
     walk_phase = 0;
-    image_index = idle_frames[(facing == HeroFacing.Left || facing == HeroFacing.Right)
-        ? HeroFacing.Down : facing];
+    facing = HeroFacing.Down;
+    image_index = idle_frames[facing];
     exit;
 }
 
@@ -261,7 +261,7 @@ if (move_x != 0 || move_y != 0)
     }
 }
 
-image_index = idle_frames[(facing == HeroFacing.Left || facing == HeroFacing.Right)
-    ? HeroFacing.Down : facing];
+facing = HeroFacing.Down;
+image_index = idle_frames[facing];
 // Keep the gait phase moving while idle so quick taps don't restart on the same pose.
 walk_phase = (walk_phase + walk_frames_per_step) mod walk_frame_count;
