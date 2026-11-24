@@ -5,6 +5,8 @@ if (room == rm_market || (instance_exists(obj_title_menu) && obj_title_menu.game
     exit;
 }
 
+if (tool_cooldown_timer > 0) tool_cooldown_timer--;
+
 inventory_rows = array_length(global.inventory_slots) div inventory_columns;
 
 if (keyboard_check_pressed(vk_tab))
@@ -16,8 +18,15 @@ if (keyboard_check_pressed(vk_tab))
 var wheel_direction = mouse_wheel_down() - mouse_wheel_up();
 if (wheel_direction != 0)
 {
-    var slot_count = inventory_columns * (inventory_open ? inventory_rows : 1);
-    inventory_selected_slot = (inventory_selected_slot + wheel_direction + slot_count) mod slot_count;
+    var wheel_slot = global.inventory_slots[inventory_selected_slot];
+    var wheel_item = is_struct(wheel_slot) ? inventory_get_item(wheel_slot.id) : undefined;
+    if (keyboard_check(vk_shift) && !is_undefined(wheel_item) && wheel_item.kind == "tool")
+        inventory_adjust_tool_area(wheel_slot, -wheel_direction);
+    else
+    {
+        var slot_count = inventory_columns * (inventory_open ? inventory_rows : 1);
+        inventory_selected_slot = (inventory_selected_slot + wheel_direction + slot_count) mod slot_count;
+    }
 }
 for (var slot_index = 0; slot_index < inventory_columns; slot_index++)
 {
@@ -74,9 +83,6 @@ if (inventory_open)
     exit;
 }
 
-var area_change = keyboard_check_pressed(ord("C")) - keyboard_check_pressed(ord("V"));
-if (area_change != 0) inventory_adjust_tool_area(global.inventory_slots[inventory_selected_slot], area_change);
-
 if (tool_use_timer > 0) tool_use_timer--;
 if (mouse_check_button_pressed(mb_left) || mouse_check_button_pressed(mb_right))
 {
@@ -84,8 +90,22 @@ if (mouse_check_button_pressed(mb_left) || mouse_check_button_pressed(mb_right))
     var over_hotbar = point_in_rectangle(device_mouse_x_to_gui(0), device_mouse_y_to_gui(0),
         layout.x, layout.y, layout.x + layout.width * layout.scale, layout.y + layout.height * layout.scale);
     var selector = instance_find(obj_tile_select, 0);
-    if (!over_hotbar && selector != noone)
-        terrain_use_tool(id, selector.pointer_target(id), mouse_check_button_pressed(mb_right));
+    var active_action_slot = global.inventory_slots[inventory_selected_slot];
+    var active_action_item = is_struct(active_action_slot)
+        ? inventory_get_item(active_action_slot.id) : undefined;
+    var cooldown_ready = is_undefined(active_action_item)
+        || active_action_item.kind != "tool" || tool_cooldown_timer <= 0;
+    if (!over_hotbar && selector != noone && cooldown_ready)
+    {
+        var action_succeeded = terrain_use_tool(id, selector.pointer_target(id),
+            mouse_check_button_pressed(mb_right));
+        if (action_succeeded && !is_undefined(active_action_item)
+            && active_action_item.kind == "tool")
+        {
+            var cooldown_seconds = max(0.1, 0.8 - clamp(floor(active_action_item.tier), 0, 4) * 0.1);
+            tool_cooldown_timer = max(1, round(game_get_speed(gamespeed_fps) * cooldown_seconds));
+        }
+    }
 }
 
 if (keyboard_check_pressed(ord("F")))

@@ -142,16 +142,12 @@ if (!inventory_open && (!instance_exists(obj_title_menu) || !obj_title_menu.game
         var active_item = inventory_get_item(active_slot.id);
         if (active_item.kind == "tool")
         {
-            var status = "";
+            var shape = inventory_tool_area_shape(active_slot);
+            var status = active_item.name + "  " + string(shape.width) + "×" + string(shape.height);
             if (active_item.tool_kind == "can")
-                status = active_item.name + "  물 " + string(inventory_water_amount(active_slot))
+                status += "  물 " + string(inventory_water_amount(active_slot))
                     + "/" + string(inventory_water_capacity(active_slot));
-            else
-            {
-                var shape = inventory_tool_area_shape(active_slot);
-                status = active_item.name + "  " + string(shape.width) + "×" + string(shape.height)
-                    + "  [C 확대 / V 축소]";
-            }
+            status += "  [Shift+휠 범위 변경]";
             draw_set_font(inventory_font);
             draw_set_halign(fa_center);
             draw_set_valign(fa_bottom);

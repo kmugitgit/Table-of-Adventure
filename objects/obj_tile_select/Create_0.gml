@@ -2,7 +2,7 @@
 depth = 50;
 selection_active = false;
 selection_in_range = false;
-interaction_reach_tiles = 2;
+interaction_reach_tiles = 2; // Base reach; tool tiers add one tile each.
 
 selection_target = function(_player, _mouse_room_x, _mouse_room_y)
 {
@@ -27,7 +27,9 @@ selection_target = function(_player, _mouse_room_x, _mouse_room_y)
     var tile_x = tilemap_get_x(map) + mouse_col * tile_width;
     var tile_y = tilemap_get_y(map) + mouse_row * tile_height;
     // Measure from the actual feet position, without snapping the player to a tile.
-    var reach = interaction_reach_tiles * min(tile_width, tile_height);
+    // Keep the base reach and add one tile for every tool tier above wood.
+    var reach_tier = item.kind == "tool" ? clamp(floor(item.tier), 0, 4) : 0;
+    var reach = (interaction_reach_tiles + reach_tier) * min(tile_width, tile_height);
     var within_reach = point_distance(_player.x, feet_y,
         tile_x + tile_width * 0.5, tile_y + tile_height * 0.5) <= reach;
     return {

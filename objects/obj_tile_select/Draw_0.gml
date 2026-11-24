@@ -18,7 +18,10 @@ var cells = terrain_tool_targets(player, target, false);
 for (var i = 0; i < array_length(cells); i++)
 {
     var cell = cells[i];
-    draw_sprite_stretched(sprite_index, cell.can_interact ? 0 : 1,
+    var show_white = cell.can_interact
+        || (variable_struct_exists(cell, "shovel_mode_mismatch")
+            && cell.shovel_mode_mismatch && cell.within_reach);
+    draw_sprite_stretched(sprite_index, show_white ? 0 : 1,
         cell.x, cell.y, cell.width, cell.height);
 }
 gpu_set_texfilter(previous_filter);

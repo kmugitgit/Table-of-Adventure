@@ -166,7 +166,6 @@ function terrain_use_tool_cell(_player, _target, _refill)
         var water = inventory_water_amount(slot);
         if (water <= 0 || index < 193 || index > 239) return false;
         terrain_change_cell(map, _target.column, _target.row, index + 48);
-        slot.water = water - 1;
     }
     else if (item.tool_kind == "shovel")
     {
@@ -391,8 +390,8 @@ function terrain_item_allows_tile(_item, _index)
 }
 
 
-// Footprint dimensions are independent of the player's unchanged interaction radius.
-// The preview and action share these freshly measured targets; no tile can bypass reach.
+// Footprint follows the tool tier. The preview and action share freshly measured targets,
+// and each tile still has to pass the tier-scaled reach check.
 function terrain_tool_targets(_player, _target, _refill)
 {
     var cells = [];
@@ -403,7 +402,21 @@ function terrain_tool_targets(_player, _target, _refill)
         _target.y + _target.height * 0.5);
     if (is_undefined(anchor)) return cells;
     var slot = global.inventory_slots[_player.inventory_selected_slot];
+    var item = is_struct(slot) ? inventory_get_item(slot.id) : undefined;
     var shape = _refill ? { width: 1, height: 1 } : inventory_tool_area_shape(slot);
+    var shovel_mode = -1;
+    if (!_refill && !is_undefined(item) && item.kind == "tool" && item.tool_kind == "shovel")
+    {
+        var anchor_crop = terrain_crop_index(anchor.column, anchor.row);
+        if (anchor_crop != -1) shovel_mode = 0; // Recover planted seeds.
+        else
+        {
+            var anchor_family = terrain_family(tile_get_index(tilemap_get(
+                _player.terrain_tilemap, anchor.column, anchor.row)));
+            if (anchor_family == 4 || anchor_family == 5) shovel_mode = 1; // Farmland to dirt.
+            else if (anchor_family == 1 || anchor_family == 2) shovel_mode = 2; // Dirt to grass.
+        }
+    }
     var feet_y = _player.y + (sprite_get_bbox_bottom(_player.sprite_index)
         - sprite_get_yoffset(_player.sprite_index)) * _player.image_yscale;
     var aim_x = anchor.x + anchor.width * 0.5 - _player.x;
@@ -427,6 +440,17 @@ function terrain_tool_targets(_player, _target, _refill)
                 anchor.y + (row - anchor.row + 0.5) * anchor.height);
             if (is_undefined(cell)) continue;
             cell.can_interact = anchor.can_interact && cell.can_interact;
+            if (!_refill && !is_undefined(item) && item.kind == "tool" && item.tool_kind == "shovel")
+            {
+                var cell_crop = terrain_crop_index(cell.column, cell.row);
+                var cell_family = terrain_family(tile_get_index(tilemap_get(
+                    _player.terrain_tilemap, cell.column, cell.row)));
+                var same_shovel_mode = shovel_mode == 0 ? cell_crop != -1
+                    : (shovel_mode == 1 ? (cell_crop == -1 && (cell_family == 4 || cell_family == 5))
+                    : (shovel_mode == 2 && cell_crop == -1 && (cell_family == 1 || cell_family == 2)));
+                cell.shovel_mode_mismatch = !same_shovel_mode;
+                if (!same_shovel_mode) cell.can_interact = false;
+            }
             cell.area_distance = sqr(col - anchor.column) + sqr(row - anchor.row);
             array_push(cells, cell);
         }
@@ -444,6 +468,13 @@ function terrain_use_tool(_player, _target, _refill)
     {
         var cell = cells[i];
         if (cell.can_interact && terrain_use_tool_cell(_player, cell, _refill)) changed = true;
+    }
+    if (changed && !_refill)
+    {
+        var slot = global.inventory_slots[_player.inventory_selected_slot];
+        var item = is_struct(slot) ? inventory_get_item(slot.id) : undefined;
+        if (!is_undefined(item) && item.kind == "tool" && item.tool_kind == "can")
+            slot.water = max(0, inventory_water_amount(slot) - 1);
     }
     return changed;
 }

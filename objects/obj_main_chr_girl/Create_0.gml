@@ -13,6 +13,7 @@ facing = HeroFacing.Down;
 tool_use_timer = 0;
 tool_use_duration = 1;
 tool_use_item_id = "";
+tool_cooldown_timer = 0;
 image_speed = 0;
 image_index = idle_frames[facing];
 

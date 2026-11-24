@@ -1,6 +1,6 @@
 /// 인벤토리 및 구매 처리
 // 장비 가격은 상점의 기본 가격 × [나무, 구리, 철, 금, 티타늄] 배수입니다.
-// 슬롯에는 id, quantity, 물뿌리개 water, 괭이·삽의 area_level을 저장합니다.
+// 슬롯에는 id, quantity, 물뿌리개의 water, 도구의 area_level을 저장합니다.
 function inventory_seed_id(_seed)
 {
     return _seed.sprite != noone ? sprite_get_name(_seed.sprite) : "seed_" + _seed.name;
@@ -227,8 +227,7 @@ function inventory_snapshot()
             result[i] = { id: slot.id, quantity: slot.quantity };
             var item = inventory_get_item(slot.id);
             if (item.kind == "tool" && item.tool_kind == "can") result[i].water = inventory_water_amount(slot);
-            if (item.kind == "tool" && (item.tool_kind == "hoe" || item.tool_kind == "shovel"))
-                result[i].area_level = inventory_tool_area_level(slot);
+            if (item.kind == "tool") result[i].area_level = inventory_tool_area_level(slot);
         }
     }
     return result;
@@ -260,10 +259,11 @@ function inventory_restore(_saved)
         };
         if (item.kind == "tool" && item.tool_kind == "can")
             global.inventory_slots[i].water = inventory_water_amount(saved);
-        if (item.kind == "tool" && (item.tool_kind == "hoe" || item.tool_kind == "shovel"))
+        if (item.kind == "tool")
         {
             var saved_area = variable_struct_get(saved, "area_level");
-            if (is_numeric(saved_area)) global.inventory_slots[i].area_level = clamp(floor(saved_area), 0, item.tier);
+            if (is_numeric(saved_area))
+                global.inventory_slots[i].area_level = clamp(floor(saved_area), 0, item.tier);
         }
         codex_discover(item_id);
     }
@@ -362,24 +362,22 @@ function inventory_tool_area_level(_slot)
 {
     if (!is_struct(_slot)) return 0;
     var item = inventory_get_item(_slot.id);
-    if (is_undefined(item) || item.kind != "tool" || (item.tool_kind != "hoe" && item.tool_kind != "shovel")) return 0;
-    var level = variable_struct_get(_slot, "area_level");
-    // Newly upgraded gear defaults to its largest unlocked footprint.
-    return is_numeric(level) ? clamp(floor(level), 0, item.tier) : item.tier;
+    if (is_undefined(item) || item.kind != "tool") return 0;
+    var saved_level = variable_struct_get(_slot, "area_level");
+    if (is_numeric(saved_level)) return clamp(floor(saved_level), 0, item.tier);
+    return clamp(floor(item.tier), 0, 4);
 }
 
 function inventory_tool_area_shape(_slot)
 {
-    var level = inventory_tool_area_level(_slot);
-    var widths = [1, 1, 1, 3, 3];
-    var heights = [1, 2, 3, 2, 3];
-    return { width: widths[level], height: heights[level] };
+    var size = inventory_tool_area_level(_slot) + 1;
+    return { width: size, height: size };
 }
 
 function inventory_adjust_tool_area(_slot, _change)
 {
-    if (!is_struct(_slot)) return;
+    if (!is_struct(_slot) || _change == 0) return;
     var item = inventory_get_item(_slot.id);
-    if (is_undefined(item) || item.kind != "tool" || (item.tool_kind != "hoe" && item.tool_kind != "shovel")) return;
-    _slot.area_level = clamp(inventory_tool_area_level(_slot) + _change, 0, item.tier);
+    if (is_undefined(item) || item.kind != "tool") return;
+    _slot.area_level = clamp(inventory_tool_area_level(_slot) + sign(_change), 0, item.tier);
 }
