@@ -57,6 +57,7 @@
     {"id":{"name":"sh_codex_grayscale","path":"shaders/sh_codex_grayscale/sh_codex_grayscale.yy",},},
     {"id":{"name":"fishing_rod","path":"sprites/fishing_rod/fishing_rod.yy",},},
     {"id":{"name":"spr_CloudPotato","path":"sprites/spr_CloudPotato/spr_CloudPotato.yy",},},
+    {"id":{"name":"spr_HeartBeet_crop","path":"sprites/spr_HeartBeet_crop/spr_HeartBeet_crop.yy",},},
     {"id":{"name":"spr_HeartBeet","path":"sprites/spr_HeartBeet/spr_HeartBeet.yy",},},
     {"id":{"name":"spr_Hellapeno","path":"sprites/spr_Hellapeno/spr_Hellapeno.yy",},},
     {"id":{"name":"spr_hoe","path":"sprites/spr_hoe/spr_hoe.yy",},},
