@@ -215,18 +215,30 @@ function cooking_ui_table_store_inventory(_ui,_table_index,_slot_index)
     if(target.quantity==1){global.inventory_slots[_slot_index]={id:table_item.id,quantity:1};table_item.id=target.id;return true;}
     return false;
 }
+// Transfer a ready station output directly into the exact inventory slot under the cursor.
+// Do not clear the station until placement succeeds; rejected drops leave both sides intact.
+function cooking_ui_station_store_inventory(_station_index,_slot_index,_expected_id)
+{
+    var stations=global.cooking_state.stations;
+    if(_station_index<0||_station_index>=array_length(stations)||_slot_index<0||_slot_index>=array_length(global.inventory_slots))return false;
+    var job=stations[_station_index];if(job.state!="ready")return false;
+    var item=cooking_station_item(_station_index);
+    if(is_undefined(item)||item.id!=_expected_id)return false;
+    var target=global.inventory_slots[_slot_index];
+    if(!is_struct(target))global.inventory_slots[_slot_index]={id:item.id,quantity:1};
+    else if(target.id==item.id&&inventory_item_stackable(item)&&target.quantity<99)target.quantity++;
+    else return false;
+    global.cooking_state.stations[_station_index]=cooking_empty_station(job.kind);
+    inventory_notify_gain(item.id,1);codex_discover(item.id);
+    return true;
+}
 function cooking_ui_step(_ui)
 {
     if(cooking_input_blocked()){_ui.drag=undefined;_ui.table_drag=undefined;return;}
     cooking_initialize();var point=cooking_ui_pointer();var state=global.cooking_state;var hero=instance_find(obj_main_chr_girl,0);
     _ui.inventory_error_timer=max(0,_ui.inventory_error_timer-delta_time/1000000);
     if(room==rm_restaurant&&state.phase=="none")cooking_new_customer();
-    var panel=cooking_ui_inventory_layout();var wheel=mouse_wheel_down()-mouse_wheel_up();
-    if(room==rm_kitchen&&point.y<panel.top)_ui.counter_scroll=clamp(_ui.counter_scroll+wheel*64,0,232);
-    if(room==rm_kitchen&&!is_struct(_ui.drag)){
-        var move=(keyboard_check_pressed(ord("D"))||keyboard_check_pressed(vk_right))-(keyboard_check_pressed(ord("A"))||keyboard_check_pressed(vk_left));
-        _ui.counter_scroll=clamp(_ui.counter_scroll+move*116,0,232);
-    }
+    // Inventory owns wheel input. The counter pans only via a left-button tabletop drag.
     if(mouse_check_button_pressed(mb_right)){_ui.drag=undefined;_ui.table_drag=undefined;return;}
     if(room==rm_restaurant&&mouse_check_button_released(mb_left)
         &&state.accepted&&state.phase=="accepted"&&is_struct(hero.inventory_held_stack)
@@ -311,7 +323,8 @@ function cooking_ui_step(_ui)
                 var target_slot=cooking_ui_inventory_at(point);
                 if(drag.kind=="table"&&target_slot!=-1)success=cooking_ui_table_store_inventory(_ui,drag.source,target_slot);
                 else if(drag.kind=="station"){
-                    if(station!=-1&&station!=drag.source)success=cooking_transfer_station(drag.source,station);
+                    if(target_slot!=-1)success=cooking_ui_station_store_inventory(drag.source,target_slot,drag.id);
+                    else if(station!=-1&&station!=drag.source)success=cooking_transfer_station(drag.source,station);
                 }else if(drag.kind=="table"){
                     if(station!=-1&&cooking_start_station(station,drag.id)){array_delete(global.cooking_state.table_items,drag.source,1);success=true;}
 
