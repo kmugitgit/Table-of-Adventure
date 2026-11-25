@@ -1,3 +1,4 @@
+if (global.developer.open) { developer_draw(); exit; }
 draw_game_hud();
 if (room != rm_market && item_book_open)
 {

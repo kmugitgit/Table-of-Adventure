@@ -16,6 +16,7 @@ if (instance_number(obj_title_menu) > 1)
 }
 
 persistent = true;
+developer_initialize();
 menu_page = room == rm_title ? TitleMenuPage.Title : TitleMenuPage.Playing;
 gameplay_input_blocked = false;
 item_book_open = false;
@@ -451,7 +452,8 @@ write_progress = function(_name, _files, _previous)
         codex_discovered: global.codex_discovered,
         inventory: inventory_snapshot(),
         terrain_changes: global.terrain_changes,
-        planted_crops: global.planted_crops
+        planted_crops: global.planted_crops,
+        cooking_state: cooking_snapshot()
     };
 
     // Write to the other slot so a failed write leaves the last valid save intact.
@@ -488,8 +490,10 @@ return_to_title = function()
 game_clock_advance = function(_seconds)
 {
     if (room == rm_title || menu_page != TitleMenuPage.Playing || gameplay_input_blocked || item_book_open) return;
+    _seconds *= global.developer.clock_rate;
     game_minutes += max(0, _seconds) * game_minutes_per_second;
     farming_advance(max(0, _seconds) * game_minutes_per_second);
+    cooking_advance(max(0,_seconds));
 };
 
 game_clock_restore = function(_saved)
@@ -513,7 +517,7 @@ game_clock_read = function()
 
 draw_game_hud = function()
 {
-    if (room != rm_main) return;
+    if (room != rm_main && room != rm_restaurant && room != rm_kitchen) return;
     if (!surface_exists(game_hud_surface)) game_hud_surface = surface_create(216, 84);
     if (!surface_exists(game_hud_surface)) return;
     var old_filter = gpu_get_texfilter();

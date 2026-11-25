@@ -8,6 +8,8 @@ walk_frame_count = 6;
 walk_frames_per_step = 10 / game_get_speed(gamespeed_fps);
 walk_phase = 0;
 move_speed = 70 / game_get_speed(gamespeed_fps);
+developer_initialize();
+if(global.developer.speed_override>=0)move_speed=global.developer.speed_override/game_get_speed(gamespeed_fps);
 facing = HeroFacing.Down;
 
 tool_use_timer = 0;
@@ -27,6 +29,11 @@ if (variable_global_exists("windmill_return") && is_struct(global.windmill_retur
         y = entrance.y;
         global.windmill_return = undefined;
     }
+}
+
+if(variable_global_exists("restaurant_return")&&is_struct(global.restaurant_return)&&room==global.restaurant_return.room_id)
+{
+ x=global.restaurant_return.x;y=global.restaurant_return.y;global.restaurant_return=undefined;
 }
 
 terrain_tilemap = -1;

@@ -62,6 +62,7 @@ function terrain_keep_on_land(_player)
                 candidate_x + half_width, candidate_feet_y)) continue;
             if (collision_rectangle(candidate_x - half_width, candidate_feet_y - foot_height,
                 candidate_x + half_width, candidate_feet_y, obj_windmill, false, true) != noone) continue;
+            if(cooking_building_blocks(candidate_x-half_width,candidate_feet_y-foot_height,candidate_x+half_width,candidate_feet_y))continue;
             best_distance = distance_squared;
             best_x = candidate_x;
             best_y = candidate_y;
@@ -139,6 +140,7 @@ function terrain_use_tool_cell(_player, _target, _refill)
     if (map == -1 || tilemap_get_tileset(map) != ts_all) return false;
     if (collision_rectangle(_target.x, _target.y, _target.x + _target.width - 0.01,
         _target.y + _target.height - 0.01, obj_windmill, false, true) != noone) return false;
+    if(cooking_building_blocks(_target.x,_target.y,_target.x+_target.width-0.01,_target.y+_target.height-0.01))return false;
     var index = tile_get_index(tilemap_get(map, _target.column, _target.row));
     if (!terrain_item_allows_tile(item, index)) return false;
     if (!_refill && item.kind == "seed")

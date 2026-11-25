@@ -1,4 +1,6 @@
 menu_page = room == rm_title ? TitleMenuPage.Title : TitleMenuPage.Playing;
+global.developer.open = false;
+global.developer.edit = "";
 gameplay_input_blocked = false;
 dragged_slider = -1;
 hovered_button = -1;
@@ -12,6 +14,7 @@ pending_load = undefined;
 game_clock_restore(variable_struct_get(data, "game_minutes"));
 codex_restore_history(variable_struct_get(data, "codex_discovered"));
 inventory_restore(variable_struct_get(data, "inventory"));
+cooking_restore(variable_struct_get(data,"cooking_state"));
 terrain_restore_changes(variable_struct_get(data, "terrain_changes"));
 terrain_restore_crops(variable_struct_get(data, "planted_crops"));
 with (obj_market)

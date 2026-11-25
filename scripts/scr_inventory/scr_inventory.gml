@@ -60,6 +60,7 @@ function inventory_initialize()
             global.inventory_definitions[$ extra_entry.id] = extra_entry;
         }
         fishing_register_items();
+        cooking_register_items();
     }
     if (!variable_struct_exists(global.inventory_definitions, "crop_HeartBeet_normal")) farming_register_items();
     if (!variable_global_exists("inventory_slots"))
@@ -102,6 +103,7 @@ function inventory_reset()
     codex_restore_history(undefined);
     global.terrain_changes = [];
     global.planted_crops = [];
+    cooking_reset();
     inventory_grant_starter_tools();
 }
 

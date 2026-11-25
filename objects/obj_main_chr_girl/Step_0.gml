@@ -1,4 +1,4 @@
-if (room == rm_market || (instance_exists(obj_title_menu) && obj_title_menu.gameplay_input_blocked))
+if (room == rm_market || room == rm_restaurant || room == rm_kitchen || (instance_exists(obj_title_menu) && obj_title_menu.gameplay_input_blocked))
 {
     walk_phase = 0;
     if (!fishing_busy(id)) facing = HeroFacing.Down;
@@ -203,6 +203,12 @@ if (mouse_check_button_pressed(mb_left) || mouse_check_button_pressed(mb_right))
 
 if (keyboard_check_pressed(ord("F")))
 {
+    var restaurant=instance_nearest(x,y,obj_restaurant);
+    var restaurant_feet=y+(sprite_get_bbox_bottom(sprite_index)-sprite_get_yoffset(sprite_index))*image_yscale;
+    if(restaurant!=noone&&restaurant.player_at_door(x,restaurant_feet))
+    {
+        cooking_try_enter(id,restaurant);exit;
+    }
     var windmill = instance_nearest(x, y, obj_windmill);
     var player_feet_y = y + (sprite_get_bbox_bottom(sprite_index)
         - sprite_get_yoffset(sprite_index)) * image_yscale;
@@ -253,9 +259,10 @@ if (move_x != 0 || move_y != 0)
         min(x, next_x) - feet_half_width,
         min(current_feet_y, feet_y) - 4 * abs(image_yscale),
         max(x, next_x) + feet_half_width, max(current_feet_y, feet_y));
-    if (!crosses_water && (next_x != x || next_y != y) && collision_rectangle(
+    if ((next_x != x || next_y != y) && (global.developer.noclip || (!crosses_water && collision_rectangle(
         next_x - feet_half_width, feet_y - 4 * abs(image_yscale),
-        next_x + feet_half_width, feet_y, obj_windmill, false, true) == noone)
+        next_x + feet_half_width, feet_y, obj_windmill, false, true) == noone
+        && !cooking_building_blocks(next_x-feet_half_width,feet_y-4*abs(image_yscale),next_x+feet_half_width,feet_y))))
     {
         x = next_x;
         y = next_y;

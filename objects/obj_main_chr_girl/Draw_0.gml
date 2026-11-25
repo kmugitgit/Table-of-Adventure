@@ -1,4 +1,4 @@
-if (room == rm_market) exit;
+if (room == rm_market || room == rm_restaurant || room == rm_kitchen) exit;
 
 var previous_filter = gpu_get_texfilter();
 gpu_set_texfilter(false);

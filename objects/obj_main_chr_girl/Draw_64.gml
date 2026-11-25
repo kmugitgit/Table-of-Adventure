@@ -1,4 +1,4 @@
-if (room == rm_market) exit;
+if (room == rm_market || room == rm_restaurant || room == rm_kitchen) exit;
 
 var layout = inventory_layout();
 var frame_width = layout.width;
@@ -284,3 +284,5 @@ if (!inventory_open && !input_blocked && windmill != noone && windmill.player_at
 }
 
 fishing_draw_gui(id);
+
+cooking_draw_exterior_hint(id);
