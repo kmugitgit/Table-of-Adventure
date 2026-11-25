@@ -280,8 +280,9 @@ function cooking_ui_step(_ui)
             if(station!=-1&&state.stations[station].state!="empty"){
                 var station_job=state.stations[station];var station_item=cooking_station_item(station);
                 if(station_job.state=="cooking"){
-                    var station_recipe=cooking_recipe(station_job.recipe_id);
-                    var input_id=station_job.step==0?station_recipe.ingredient:cooking_output_id(station_recipe,station_job.step-1);
+                    var input_id=station_job.input_id;
+                    if (!is_string(input_id) || is_undefined(inventory_get_item(input_id)))
+                        input_id=cooking_recipe_ingredient_item_id(cooking_recipe(station_job.recipe_id));
                     station_item=inventory_get_item(input_id);
                 }
                 _ui.drag={kind:"station",source:station,id:station_item.id,start_x:point.x,start_y:point.y,moved:false};

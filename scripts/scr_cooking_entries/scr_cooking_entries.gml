@@ -1,45 +1,35 @@
 /// Cooking catalog. Keep IDs stable for saved food/orders/stations.
 // station: board / pot / mortar / pan / plate. Times below are REAL seconds.
-// The first step accepts the ingredient crop; later steps accept the previous output.
+// Every recipe has one processing step. Intermediate recipes become ingredients for later recipes.
 // Completed station items stay on the station until dragged out.
 // Editing sprite replaces the temporary HeartBeet artwork for that recipe's outputs.
 function scr_cooking_entries()
 {
     return [
-        { 
-			id: "heartbeet_salad",
-			name: "하트비트 샐러드",
-			ingredient: "HeartBeet",
-			sprite: spr_HeartBeet,
-			effect: "health_regen",
-			effect_name: "체력 회복 증진",
-			level: 1, temperature: "cold",
-			dish_type: "salad",
-			price: 90,
-			orders: ["체력 회복에 좋은 차가운 음식을 주세요.", "지친 몸을 회복할 수 있는 시원한 샐러드가 먹고 싶어요."],
-			steps: [ { station: "board", seconds: 4, name: "잘린 하트비트", auto_collect: false },
-                   { station: "plate", seconds: 3, name: "하트비트 샐러드", auto_collect: false } ] },
+        { id: "heartbeet_chopped", name: "잘린 하트비트", ingredient: "HeartBeet", sprite: spr_HeartBeet,
+          effect: " ", level: 0, price: 0,
+          steps: [ { station: "board", seconds: 4, name: "잘린 하트비트" } ] },
+        { id: "heartbeet_salad", name: "하트비트 샐러드", ingredient: "heartbeet_chopped", sprite: spr_HeartBeet,
+          effect: " ", level: 1, price: 90,
+          steps: [ { station: "plate", seconds: 3, name: "하트비트 샐러드" } ] },
         { id: "heartbeet_soup", name: "하트비트 수프", ingredient: "HeartBeet", sprite: spr_HeartBeet,
-          effect: "health_regen", effect_name: "체력 회복 증진", level: 1, temperature: "warm", dish_type: "soup", price: 60,
-          orders: ["체력 회복에 좋은 따뜻한 음식을 주세요.", "기운을 되찾을 수 있는 따뜻한 수프를 부탁해요."],
-          steps: [ { station: "pot", seconds: 5, name: "하트비트 수프", auto_collect: false } ] },
+          effect: " ", level: 1, price: 60,
+          steps: [ { station: "pot", seconds: 5, name: "하트비트 수프" } ] },
         { id: "hellapeno_sauce", name: "헬라피뇨 핫소스", ingredient: "Hellapeno", sprite: spr_Hellapeno,
-          effect: "fire_resist", effect_name: "화염 저항", level: 1, temperature: "cold", dish_type: "sauce", price: 55,
-          orders: ["화염 저항에 도움이 되는 매콤한 소스를 주세요.", "약한 불길을 견딜 수 있게 해주는 소스가 필요해요."],
-          steps: [ { station: "mortar", seconds: 4, name: "헬라피뇨 핫소스", auto_collect: false } ] },
+          effect: " ", level: 1, price: 55,
+          steps: [ { station: "mortar", seconds: 4, name: "헬라피뇨 핫소스" } ] },
         { id: "cloudpotato_soup", name: "구름감자 수프", ingredient: "CloudPotato", sprite: spr_CloudPotato,
-          effect: "move_speed", effect_name: "이동속도 증가", level: 1, temperature: "warm", dish_type: "soup", price: 65,
-          orders: ["발걸음이 빨라지는 따뜻한 음식을 부탁해요.", "긴 여행길을 더 빠르게 걸을 수 있는 수프가 먹고 싶어요."],
-          steps: [ { station: "pot", seconds: 5, name: "구름감자 수프", auto_collect: false } ] },
+          effect: " ", level: 1, price: 65,
+          steps: [ { station: "pot", seconds: 5, name: "구름감자 수프" } ] },
         { id: "magmato_soup", name: "마그마토 수프", ingredient: "Magmato", sprite: spr_Magmato,
-          effect: "fire_resist", effect_name: "화염 저항", level: 2, temperature: "warm", dish_type: "soup", price: 80,
-          orders: ["강한 불길도 견딜 수 있는 따뜻한 음식을 주세요.", "화염 저항이 강한 2단계 수프를 부탁해요."],
-          steps: [ { station: "pot", seconds: 6, name: "마그마토 수프", auto_collect: false } ] },
-        { id: "icecarrot_pancake", name: "얼음당근전", ingredient: "IceCarrot", sprite: spr_IceCarrot,
-          effect: "freeze_resist", effect_name: "빙결 저항", level: 1, temperature: "warm", dish_type: "pancake", price: 110,
-          orders: ["추위를 견디게 해주는 따뜻한 전을 부탁해요.", "빙결 저항에 도움이 되는 바삭한 전이 먹고 싶어요."],
-          steps: [ { station: "board", seconds: 4, name: "채 썬 얼음당근", auto_collect: false },
-                   { station: "pan", seconds: 5, name: "얼음당근전", auto_collect: false } ] }
+          effect: " ", level: 2, price: 80,
+          steps: [ { station: "pot", seconds: 6, name: "마그마토 수프" } ] },
+        { id: "icecarrot_shredded", name: "채 썬 얼음당근", ingredient: "IceCarrot", sprite: spr_IceCarrot,
+          effect: " ", level: 0, price: 0,
+          steps: [ { station: "board", seconds: 4, name: "채 썬 얼음당근" } ] },
+        { id: "icecarrot_pancake", name: "얼음당근 전", ingredient: "icecarrot_shredded", sprite: spr_IceCarrot,
+          effect: " ", level: 1, price: 110,
+          steps: [ { station: "pan", seconds: 5, name: "얼음당근전" } ] }
     ];
 }
 

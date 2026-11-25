@@ -179,7 +179,7 @@ function developer_action(_key)
         case "recipe_next":d.recipe=(d.recipe+1) mod array_length(global.cooking_recipes);break;
         case "order":global.cooking_state.order_recipe=recipe.id;global.cooking_state.order_text=customer_dialogue_for_recipe(recipe.id);global.cooking_state.phase="offer";global.cooking_state.accepted=false;global.cooking_state.review_remaining=0;break;
         case "accept":cooking_accept_order();break;
-        case "ingredient":developer_give("crop_"+recipe.ingredient+"_normal",9);break;
+        case "ingredient":developer_give(cooking_recipe_ingredient_item_id(recipe),9);break;
         case "dish":developer_give(cooking_output_id(recipe,array_length(recipe.steps)-1),d.quantity);break;
         case "finish":for(var i=0;i<array_length(global.cooking_state.stations);i++){var job=global.cooking_state.stations[i];if(job.state=="cooking"){job.state="ready";var dish=cooking_recipe(job.recipe_id);job.elapsed=dish.steps[job.step].seconds;}}break;
         case "collect":for(var i=0;i<array_length(global.cooking_state.stations);i++)if(global.cooking_state.stations[i].state=="ready")cooking_collect(i);break;

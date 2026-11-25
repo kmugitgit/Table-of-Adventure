@@ -663,6 +663,7 @@ function inventory_restore(_saved)
                     item_id = string_copy(item_id, 1, last_underscore - 1);
             }
         }
+        item_id = cooking_migrate_item_id(item_id);
         var item = inventory_get_item(item_id);
         if (is_undefined(item) || item.kind == "bag") continue;
         var restore_slot = -1;
