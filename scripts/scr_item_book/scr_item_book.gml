@@ -243,7 +243,7 @@ function scr_item_book_draw(_controller)
         0.9 * scale, 0.9 * scale, 0);
 
     draw_set_color(dark);
-    draw_text_transformed(left + 238 * scale, top + 75 * scale, "정렬",
+    draw_text_transformed(left + 234 * scale, top + 75 * scale, "정렬",
         0.7 * scale, 0.7 * scale, 0);
 
     draw_set_halign(fa_left);
@@ -269,8 +269,10 @@ function scr_item_book_draw(_controller)
     var count_label = "종류: " + string(found_count) + "/" + string(total_count)
         + " (" + string(percent) + "%)";
     draw_set_color(dark);
-    draw_text_transformed(left + 220 * scale, top + 105 * scale, count_label,
+    draw_set_halign(fa_center);
+    draw_text_transformed(left + 250 * scale, top + 105 * scale, count_label,
         0.56 * scale, 0.56 * scale, 0);
+    draw_set_halign(fa_left);
 
     // The 6×5 list uses the 32px cell sprite with a 1px gutter.
     var grid_x = 102;

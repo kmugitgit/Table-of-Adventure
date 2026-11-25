@@ -8,6 +8,7 @@ function inventory_seed_id(_seed)
 
 function inventory_initialize()
 {
+    if (!variable_global_exists("inventory_gain_notices")) global.inventory_gain_notices = [];
     if (!variable_global_exists("inventory_definitions"))
     {
         global.inventory_definitions = {};
@@ -69,9 +70,33 @@ function inventory_initialize()
     if (!variable_global_exists("player_gold")) global.player_gold = 10000;
 }
 
+function inventory_notify_gain(_id, _quantity)
+{
+    if (_quantity <= 0) return;
+    if (!variable_global_exists("inventory_gain_notices")) global.inventory_gain_notices = [];
+    var item = inventory_get_item(_id);
+    if (is_undefined(item)) return;
+    var notices = global.inventory_gain_notices;
+    // Update the existing line when the same item is gained before its notice disappears.
+    for (var i = 0; i < array_length(notices); i++)
+    {
+        if (notices[i].id == _id && notices[i].age < 2.5)
+        {
+            notices[i].quantity += _quantity;
+            notices[i].age = 0;
+            notices[i].overflow_age = -1;
+            return;
+        }
+    }
+    if (array_length(notices) >= 3)
+        notices[array_length(notices) - 3].overflow_age = 0;
+    array_push(notices, { id: _id, name: item.name, quantity: _quantity, age: 0, overflow_age: -1 });
+}
+
 function inventory_reset()
 {
     inventory_initialize();
+    global.inventory_gain_notices = [];
     global.inventory_slots = array_create(18, undefined);
     global.player_gold = 10000;
     codex_restore_history(undefined);
@@ -614,6 +639,7 @@ function inventory_restore(_saved)
         if (!is_string(item_id) || !is_numeric(quantity) || quantity < 1) continue;
         if (string_copy(item_id, 1, 7) == "trowel_")
             item_id = "shovel_" + string_delete(item_id, 1, 7);
+        item_id = fishing_migrate_item_id(item_id);
         var item = inventory_get_item(item_id);
         if (is_undefined(item) || item.kind == "bag") continue;
         var restore_slot = -1;

@@ -201,13 +201,6 @@ if (mouse_check_button_pressed(mb_left) || mouse_check_button_pressed(mb_right))
     }
 }
 
-if (fishing_busy(id))
-{
-    walk_phase = 0;
-    image_index = idle_frames[facing];
-    exit;
-}
-
 if (keyboard_check_pressed(ord("F")))
 {
     var windmill = instance_nearest(x, y, obj_windmill);

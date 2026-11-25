@@ -28,6 +28,7 @@ function codex_restore_history(_saved)
         var key = _saved[i];
         if (is_string(key) && string_copy(key, 1, 7) == "trowel_")
             key = "shovel_" + string_delete(key, 1, 7);
+        key = fishing_migrate_item_id(key);
         if (is_string(key) && string_length(key) > 0 && string_length(key) <= 128)
             codex_discover(key);
     }

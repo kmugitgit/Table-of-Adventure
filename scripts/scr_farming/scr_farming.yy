@@ -4,7 +4,10 @@
   "isCompatibility":false,
   "isDnD":false,
   "name":"scr_farming",
-  "parent":{"name":"Scripts","path":"folders/Scripts.yy",},
+  "parent":{
+    "name":"Scripts",
+    "path":"folders/Scripts.yy",
+  },
   "resourceType":"GMScript",
   "resourceVersion":"2.0",
 }

@@ -57,6 +57,7 @@ if (inventory_open)
 
 draw_set_halign(fa_left);
 draw_set_valign(fa_top);
+var hovered_item = undefined;
 for (var row = 0; row < layout.rows; row++)
 {
     var top = inventory_row_top(row, layout.first_top);
@@ -82,6 +83,7 @@ for (var row = 0; row < layout.rows; row++)
         if (is_struct(slot))
         {
             var item = inventory_get_item(slot.id);
+            if (hovered) hovered_item = item;
             codex_draw_item(item, [left + 3, top + 3, right - 3, bottom - 3], true);
             if (item.kind == "tool" && item.tool_kind == "can")
             {
@@ -135,24 +137,67 @@ draw_surface_part_ext(inventory_surface, 0, 0, frame_width, frame_height,
 // Show the selected inventory item's name without adding tool-specific stats.
 if (!instance_exists(obj_title_menu) || !obj_title_menu.gameplay_input_blocked)
 {
-    var active_slot = global.inventory_slots[inventory_selected_slot];
-    if (is_struct(active_slot))
+    var active_item = hovered_item;
+    if (is_undefined(active_item))
     {
-        var active_item = inventory_get_item(active_slot.id);
-        if (!is_undefined(active_item) && variable_struct_exists(active_item, "name"))
-        {
-            var status = active_item.name;
-            draw_set_font(inventory_font);
-            draw_set_halign(fa_center);
-            draw_set_valign(fa_bottom);
-            draw_set_color(palette.shadow);
-            draw_text_transformed(display_get_gui_width() * 0.5 + layout.scale,
-                layout.y - 5 * layout.scale, status, layout.scale, layout.scale, 0);
-            draw_set_color(palette.parchment);
-            draw_text_transformed(display_get_gui_width() * 0.5,
-                layout.y - 6 * layout.scale, status, layout.scale, layout.scale, 0);
-        }
+        var active_slot = global.inventory_slots[inventory_selected_slot];
+        if (is_struct(active_slot)) active_item = inventory_get_item(active_slot.id);
     }
+    if (!is_undefined(active_item) && variable_struct_exists(active_item, "name"))
+    {
+        var status = active_item.name;
+        draw_set_font(inventory_font);
+        draw_set_halign(fa_center);
+        draw_set_valign(fa_bottom);
+        draw_set_color(palette.shadow);
+        draw_text_transformed(display_get_gui_width() * 0.5 + layout.scale,
+            layout.y - 5 * layout.scale, status, layout.scale, layout.scale, 0);
+        draw_set_color(palette.parchment);
+        draw_text_transformed(display_get_gui_width() * 0.5,
+            layout.y - 6 * layout.scale, status, layout.scale, layout.scale, 0);
+    }
+}
+
+// Gain notices stack from the lower-left. Older fourth-and-beyond lines fade immediately.
+if (variable_global_exists("inventory_gain_notices"))
+{
+    var notices = global.inventory_gain_notices;
+    var notice_delta = delta_time / 1000000;
+    for (var n = array_length(notices) - 1; n >= 0; n--)
+    {
+        notices[n].age += notice_delta;
+        if (notices[n].overflow_age >= 0) notices[n].overflow_age += notice_delta;
+        if (notices[n].age >= 2.5) array_delete(notices, n, 1);
+    }
+    var notice_scale = 3;
+    var notice_spacing = 24 * notice_scale;
+    for (var n = 0; n < array_length(notices); n++)
+    {
+        var notice = notices[n];
+        var alpha = notice.age <= 1 ? 1 : 1 - clamp((notice.age - 1) / 1.5, 0, 1);
+        var notice_y = display_get_gui_height() - 66
+            - (array_length(notices) - 1 - n) * notice_spacing;
+        // During the fade, drift the line upward as it disappears.
+        if (notice.age > 1)
+            notice_y -= clamp((notice.age - 1) / 1.5, 0, 1) * 18 * notice_scale;
+        if (notice.overflow_age >= 0)
+        {
+            alpha = min(alpha, 1 - clamp(notice.overflow_age / 0.4, 0, 1));
+            notice_y -= notice.overflow_age * 18 * notice_scale;
+        }
+        if (alpha <= 0) continue;
+        var label = notice.name + " x " + string(notice.quantity);
+        draw_set_font(inventory_font);
+        draw_set_halign(fa_left);
+        draw_set_valign(fa_middle);
+        draw_set_alpha(alpha);
+        draw_set_color(palette.shadow);
+        draw_text_transformed(17 + notice_scale, notice_y + notice_scale,
+            label, notice_scale, notice_scale, 0);
+        draw_set_color(palette.parchment);
+        draw_text_transformed(16, notice_y, label, notice_scale, notice_scale, 0);
+    }
+    draw_set_alpha(1);
 }
 
 // Draw the picked-up item just above and to the right of the pointer.

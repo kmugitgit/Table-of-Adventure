@@ -155,6 +155,7 @@ function farming_harvest(_crop_index)
     var item_id = "crop_" + definition.product_id + "_" + quality.id;
     // Adding one item is atomic: a full bag leaves the crop, age and quality intact.
     if (inventory_stack_add(item_id, 1) != 0) return false;
+    inventory_notify_gain(item_id, 1);
     codex_discover(crop.seed_id);
     codex_discover(item_id);
     array_delete(global.planted_crops, _crop_index, 1);
