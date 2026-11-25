@@ -5,8 +5,8 @@
   "isDnD":false,
   "name":"scr_cooking_entries",
   "parent":{
-    "name":"Scripts",
-    "path":"folders/Scripts.yy",
+    "name":"cooking",
+    "path":"folders/Scripts/cooking.yy",
   },
   "resourceType":"GMScript",
   "resourceVersion":"2.0",

@@ -1,4 +1,4 @@
-if (room == rm_market || room == rm_restaurant || room == rm_kitchen || (instance_exists(obj_title_menu) && obj_title_menu.gameplay_input_blocked))
+if (room == rm_market || (instance_exists(obj_title_menu) && obj_title_menu.gameplay_input_blocked))
 {
     walk_phase = 0;
     if (!fishing_busy(id)) facing = HeroFacing.Down;
@@ -8,7 +8,7 @@ if (room == rm_market || room == rm_restaurant || room == rm_kitchen || (instanc
 
 if (tool_cooldown_timer > 0) tool_cooldown_timer--;
 
-if (fishing_handle_input(id))
+if (room != rm_kitchen && room != rm_restaurant && fishing_handle_input(id))
 {
     walk_phase = 0;
     image_index = idle_frames[facing];
@@ -45,13 +45,14 @@ for (var slot_index = 0; slot_index < inventory_columns; slot_index++)
     }
 }
 
-if (inventory_open)
+if (inventory_open || room == rm_kitchen || room == rm_restaurant)
 {
     var direction_x = keyboard_check_pressed(vk_right) - keyboard_check_pressed(vk_left);
     var direction_y = keyboard_check_pressed(vk_down) - keyboard_check_pressed(vk_up);
     var selected_row = inventory_selected_slot div inventory_columns;
     var selected_column = inventory_selected_slot mod inventory_columns;
-    selected_row = clamp(selected_row + direction_y, 0, inventory_rows - 1);
+    var last_visible_row=inventory_open?inventory_rows-1:0;
+    selected_row = clamp(selected_row + direction_y, 0, last_visible_row);
     selected_column = clamp(selected_column + direction_x, 0, inventory_columns - 1);
     inventory_selected_slot = selected_row * inventory_columns + selected_column;
 
@@ -170,6 +171,15 @@ if (inventory_open)
         inventory_drag_slots = [];
     }
 
+    walk_phase = 0;
+    facing = HeroFacing.Down;
+    image_index = idle_frames[facing];
+    exit;
+}
+
+// Kitchen and restaurant rooms keep the shared inventory controls and block world actions.
+if (room == rm_kitchen || room == rm_restaurant)
+{
     walk_phase = 0;
     facing = HeroFacing.Down;
     image_index = idle_frames[facing];

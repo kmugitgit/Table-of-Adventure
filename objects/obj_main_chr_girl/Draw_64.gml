@@ -1,4 +1,4 @@
-if (room == rm_market || room == rm_restaurant || room == rm_kitchen) exit;
+if (room == rm_market) exit;
 
 var layout = inventory_layout();
 var frame_width = layout.width;
@@ -124,7 +124,20 @@ for (var row = 0; row < layout.rows; row++)
 }
 surface_reset_target();
 
-if (inventory_open)
+// The kitchen controller composites this shared surface with its scene and cursor layer.
+// Avoid drawing a second inventory panel here, which could cover the held-item preview.
+if (room == rm_kitchen)
+{
+    gpu_set_texfilter(previous_filter);
+    draw_set_valign(previous_valign);
+    draw_set_halign(previous_halign);
+    draw_set_font(previous_font);
+    draw_set_alpha(previous_alpha);
+    draw_set_color(previous_colour);
+    exit;
+}
+
+if (inventory_open && room != rm_kitchen)
 {
     draw_set_color(c_black);
     draw_set_alpha(0.52);
@@ -201,7 +214,7 @@ if (variable_global_exists("inventory_gain_notices"))
 }
 
 // Draw the picked-up item just above and to the right of the pointer.
-if (inventory_open && is_struct(inventory_held_stack))
+if ((inventory_open || room == rm_restaurant) && is_struct(inventory_held_stack))
 {
     var dragged_item = inventory_get_item(inventory_held_stack.id);
     if (!is_undefined(dragged_item))

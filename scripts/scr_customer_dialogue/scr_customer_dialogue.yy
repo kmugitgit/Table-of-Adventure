@@ -1,0 +1,13 @@
+{
+  "$GMScript":"v1",
+  "%Name":"scr_customer_dialogue",
+  "isCompatibility":false,
+  "isDnD":false,
+  "name":"scr_customer_dialogue",
+  "parent":{
+    "name":"cooking",
+    "path":"folders/Scripts/cooking.yy",
+  },
+  "resourceType":"GMScript",
+  "resourceVersion":"2.0",
+}

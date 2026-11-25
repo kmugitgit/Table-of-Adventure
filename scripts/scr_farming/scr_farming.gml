@@ -1,13 +1,11 @@
-/// Farming configuration: game minutes, quality weights, and future cooking multipliers.
+/// Farming configuration: growth time and crop quality odds.
 function farming_initialize()
 {
     if (variable_global_exists("farming_rules")) return;
     global.farming_rules = {
         qualities: [
-            { id: "normal", name: "일반", chance: 60, effect_multiplier: 1.0, colour: c_white },
-            { id: "fine", name: "우수", chance: 25, effect_multiplier: 1.1, colour: make_color_rgb(190, 215, 225) },
-            { id: "excellent", name: "특급", chance: 12, effect_multiplier: 1.25, colour: make_color_rgb(255, 206, 80) },
-            { id: "premium", name: "최상급", chance: 3, effect_multiplier: 1.5, colour: make_color_rgb(205, 145, 255) }
+            { id: "normal", name: "일반", chance: 98 },
+            { id: "high", name: "고품질", chance: 2 }
         ],
         // Keep seed/product identities; only growth artwork currently shares HeartBeet.
         crops: [
@@ -44,11 +42,9 @@ function farming_register_items()
                 id: item_id, kind: "crop", tab: "item", price: 0,
                 name: crop.name + (rank > 0 ? " (" + quality.name + ")" : ""),
                 sprite: crop.sprite, sprite_frame: 0, colour: c_white,
-                description: quality.name + " 품질의 " + crop.name + "입니다. 요리 효과 배율: "
-                    + string(quality.effect_multiplier),
+                description: quality.name + " 품질의 " + crop.name + "입니다.",
                 base_crop_id: crop.product_id, seed_id: crop.seed_id,
-                quality_rank: rank, quality_id: quality.id,
-                quality_colour: quality.colour, effect_multiplier: quality.effect_multiplier
+                quality_id: quality.id
             };
         }
     }
@@ -156,24 +152,8 @@ function farming_harvest(_crop_index)
     // Adding one item is atomic: a full bag leaves the crop, age and quality intact.
     if (inventory_stack_add(item_id, 1) != 0) return false;
     inventory_notify_gain(item_id, 1);
-    codex_discover(crop.seed_id);
     codex_discover(item_id);
     array_delete(global.planted_crops, _crop_index, 1);
     return true;
 }
 
-function farming_draw_quality_badge(_item, _bounds)
-{
-    if (!variable_struct_exists(_item, "quality_rank") || _item.quality_rank <= 0) return;
-    var old_colour = draw_get_color();
-    var cx = floor(_bounds[2] - 4);
-    var cy = floor(_bounds[1] + 5);
-    draw_set_color(make_color_rgb(40, 29, 23));
-    draw_rectangle(cx - 4, cy - 4, cx + 4, cy + 4, false);
-    draw_set_color(_item.quality_colour);
-    draw_line(cx, cy - 3, cx, cy + 3);
-    draw_line(cx - 3, cy, cx + 3, cy);
-    draw_line(cx - 2, cy - 2, cx + 2, cy + 2);
-    draw_line(cx - 2, cy + 2, cx + 2, cy - 2);
-    draw_set_color(old_colour);
-}

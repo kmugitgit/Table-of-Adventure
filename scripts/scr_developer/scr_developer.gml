@@ -5,7 +5,7 @@ function developer_initialize()
     if(variable_global_exists("developer"))return;
     global.developer={open:false,tab:0,surface:-1,edit:"",buffer:"",message:"",
         clock_rate:1,noclip:false,speed_override:-1,category:0,item_page:0,item_id:"",quantity:1,
-        slot:0,tool_tier:0,quality:0,recipe:0,fish:0,teleport_x:0,teleport_y:0};
+        slot:0,tool_tier:0,recipe:0,fish:0,teleport_x:0,teleport_y:0};
 }
 function developer_hero(){return instance_find(obj_main_chr_girl,0);}
 function developer_pointer()
@@ -23,7 +23,7 @@ function developer_items()
     if(kind=="crop"){
         // Explicit display order: struct key enumeration is not ordered.
         var crop_order=["HeartBeet","Hellapeno","CloudPotato","IceCarrot","Magmato"];
-        var quality_order=["normal","fine","excellent","premium"];
+        var quality_order=["normal","high"];
         for(var crop_index=0;crop_index<array_length(crop_order);crop_index++){
             for(var quality_index=0;quality_index<array_length(quality_order);quality_index++){
                 var item_id="crop_"+crop_order[crop_index]+"_"+quality_order[quality_index];
@@ -109,14 +109,14 @@ function developer_rows()
             rows=[["전체 작물 물주기","water_crops","action"],["전체 작물 즉시 성장","grow","action"],
                 ["성장한 작물 모두 수확","harvest","action"],["게임 시간 +4시간 (성장 포함)","advance","action"],
                 ["물뿌리개 물 최대 충전","refill","action"],["모든 씨앗 9개씩 지급","seeds","action"],
-                ["수확 품질: "+global.farming_rules.qualities[d.quality].name,"quality","action"],["선택 품질로 전체 작물 설정","crop_quality","action"],
+                ["전체 작물 일반 품질로 설정","crop_normal","action"],["전체 작물 고품질로 설정","crop_high","action"],
                 ["주변 3x3 경작지 만들기","till","action"],["주변 3x3 젖은 경작지","wet","action"]];break;
         case 3:
             var recipe=global.cooking_recipes[d.recipe];
             rows=[["이전 요리","recipe_prev","action"],["다음 요리","recipe_next","action"],
                 ["선택한 요리로 주문 지정","order","action"],["현재 주문 수락","accept","action"],
                 ["선택 요리의 재료 9개 지급","ingredient","action"],["선택 요리 완성품 지급","dish","action"],
-                ["품질: "+global.farming_rules.qualities[d.quality].name,"quality","action"],["모든 조리 즉시 완료","finish","action"],
+                ["모든 조리 즉시 완료","finish","action"],
                 ["완료된 요리 모두 받기","collect","action"],["새 손님 부르기","customer","action"],
                 ["선택 요리 판매 가격","price","number"],["첫 조리 단계 시간 (초)","duration","number"],
                 ["현재 주문 정답 요리 지급","answer","action"],["현재 주문 정답 제출","serve","action"]];break;
@@ -148,7 +148,7 @@ function developer_room(_destination)
 function developer_action(_key)
 {
     var d=global.developer;var c=instance_find(obj_title_menu,0);var h=developer_hero();
-    var recipe=global.cooking_recipes[d.recipe];var quality=global.farming_rules.qualities[d.quality];
+    var recipe=global.cooking_recipes[d.recipe];
     d.message="적용했습니다.";
     switch(_key){
         case "noclip":d.noclip=!d.noclip;if(!d.noclip&&room==rm_main&&h!=noone)terrain_keep_on_land(h);break;
@@ -163,8 +163,8 @@ function developer_action(_key)
         case "advance":c.game_minutes+=240;farming_advance(240);break;
         case "refill":for(var i=0;i<array_length(global.inventory_slots);i++){var slot=global.inventory_slots[i];if(is_struct(slot)){var item=inventory_get_item(slot.id);if(item.kind=="tool"&&item.tool_kind=="can")slot.water=inventory_water_capacity(slot);}}break;
         case "seeds":var crops=global.farming_rules.crops;for(var i=0;i<array_length(crops);i++)developer_give(crops[i].seed_id,9);break;
-        case "quality":d.quality=(d.quality+1) mod array_length(global.farming_rules.qualities);break;
-        case "crop_quality":var roll=0;for(var i=0;i<d.quality;i++)roll+=global.farming_rules.qualities[i].chance;for(var i=0;i<array_length(global.planted_crops);i++)global.planted_crops[i].quality_roll=roll+0.5;break;
+        case "crop_normal":for(var i=0;i<array_length(global.planted_crops);i++)global.planted_crops[i].quality_roll=50;break;
+        case "crop_high":for(var i=0;i<array_length(global.planted_crops);i++)global.planted_crops[i].quality_roll=99;break;
         case "till":case "wet":
             if(room==rm_main&&h!=noone&&h.terrain_tilemap!=-1){
                 var map=h.terrain_tilemap;var tw=tilemap_get_tile_width(map);var th=tilemap_get_tile_height(map);
@@ -177,17 +177,17 @@ function developer_action(_key)
             }else d.message="메인 필드에서 사용하세요.";break;
         case "recipe_prev":d.recipe=(d.recipe+array_length(global.cooking_recipes)-1) mod array_length(global.cooking_recipes);break;
         case "recipe_next":d.recipe=(d.recipe+1) mod array_length(global.cooking_recipes);break;
-        case "order":global.cooking_state.order_recipe=recipe.id;global.cooking_state.order_text=recipe.orders[0];global.cooking_state.phase="offer";global.cooking_state.accepted=false;global.cooking_state.review_remaining=0;break;
+        case "order":global.cooking_state.order_recipe=recipe.id;global.cooking_state.order_text=customer_dialogue_for_recipe(recipe.id);global.cooking_state.phase="offer";global.cooking_state.accepted=false;global.cooking_state.review_remaining=0;break;
         case "accept":cooking_accept_order();break;
-        case "ingredient":developer_give("crop_"+recipe.ingredient+"_"+quality.id,9);break;
-        case "dish":developer_give(cooking_output_id(recipe,array_length(recipe.steps)-1,quality.id),d.quantity);break;
-        case "finish":for(var i=0;i<array_length(global.cooking_state.stations);i++){var job=global.cooking_state.stations[i];if(job.state=="cooking"){job.state="ready";var dish=cooking_recipe(job.recipe_id);job.elapsed=dish.steps[job.step].seconds;if(dish.steps[job.step].auto_collect)cooking_collect(i);}}break;
+        case "ingredient":developer_give("crop_"+recipe.ingredient+"_normal",9);break;
+        case "dish":developer_give(cooking_output_id(recipe,array_length(recipe.steps)-1),d.quantity);break;
+        case "finish":for(var i=0;i<array_length(global.cooking_state.stations);i++){var job=global.cooking_state.stations[i];if(job.state=="cooking"){job.state="ready";var dish=cooking_recipe(job.recipe_id);job.elapsed=dish.steps[job.step].seconds;}}break;
         case "collect":for(var i=0;i<array_length(global.cooking_state.stations);i++)if(global.cooking_state.stations[i].state=="ready")cooking_collect(i);break;
         case "customer":cooking_new_customer();break;
         case "answer":case "serve":
             var answer=cooking_recipe(global.cooking_state.order_recipe);
             if(is_undefined(answer)){d.message="주문이 없습니다.";break;}
-            var food_id=cooking_output_id(answer,array_length(answer.steps)-1,quality.id);
+            var food_id=cooking_output_id(answer,array_length(answer.steps)-1);
             if(_key=="answer")developer_give(food_id,1);
             else {var found=-1;for(var i=0;i<array_length(global.inventory_slots);i++)if(is_struct(global.inventory_slots[i])&&cooking_order_matches(inventory_get_item(global.inventory_slots[i].id))){found=i;break;}
                 if(found!=-1&&cooking_serve(found,global.inventory_slots[found].id))d.message="정답 요리를 제출했습니다.";else d.message="주문 수락과 정답 요리 보유가 필요합니다.";}break;

@@ -7,7 +7,7 @@ function cooking_initialize()
 
 function cooking_empty_station(_kind)
 {
-    return { kind: _kind, state: "empty", recipe_id: "", step: -1, quality_id: "normal", elapsed: 0 };
+    return { kind: _kind, state: "empty", recipe_id: "", step: -1, elapsed: 0 };
 }
 
 function cooking_reset()
@@ -28,45 +28,43 @@ function cooking_recipe(_id)
     return undefined;
 }
 
-function cooking_quality(_id)
+function cooking_effect_name(_effect)
 {
-    farming_initialize();
-    for (var i = 0; i < array_length(global.farming_rules.qualities); i++)
-        if (global.farming_rules.qualities[i].id == _id) return global.farming_rules.qualities[i];
-    return global.farming_rules.qualities[0];
+    switch (_effect)
+    {
+        case "health_regen": return "체력 회복 증진";
+        case "fire_resist": return "화염 저항";
+        case "move_speed": return "이동속도 증가";
+        case "freeze_resist": return "빙결 저항";
+    }
+    return _effect;
 }
 
-function cooking_output_id(_recipe, _step, _quality)
+function cooking_output_id(_recipe, _step)
 {
     return (_step == array_length(_recipe.steps) - 1 ? "food_" : "prepared_")
-        + _recipe.id + "_s" + string(_step) + "_" + _quality;
+        + _recipe.id + "_s" + string(_step);
 }
 
 function cooking_register_items()
 {
-    cooking_initialize(); farming_initialize();
+    cooking_initialize();
     for (var i = 0; i < array_length(global.cooking_recipes); i++)
     {
         var recipe = global.cooking_recipes[i];
         for (var step = 0; step < array_length(recipe.steps); step++)
         {
-            for (var rank = 0; rank < array_length(global.farming_rules.qualities); rank++)
-            {
-                var quality = global.farming_rules.qualities[rank];
-                var final_dish = step == array_length(recipe.steps) - 1;
-                var item_id = cooking_output_id(recipe, step, quality.id);
-                global.inventory_definitions[$ item_id] = {
+            var final_dish = step == array_length(recipe.steps) - 1;
+            var item_id = cooking_output_id(recipe, step);
+            global.inventory_definitions[$ item_id] = {
                     id: item_id, kind: final_dish ? "food" : "prepared", tab: "item",
-                    name: recipe.steps[step].name + (rank > 0 ? " (" + quality.name + ")" : ""),
+                    name: recipe.steps[step].name,
                     sprite: recipe.sprite, sprite_frame: 0, colour: c_white,
                     recipe_id: recipe.id, cooking_step: step, price: final_dish ? recipe.price : 0,
-                    quality_id: quality.id, quality_rank: rank, quality_colour: quality.colour,
-                    effect_multiplier: quality.effect_multiplier, effect_key: recipe.effect,
-                    effect_level: recipe.level, effect_power: recipe.level * quality.effect_multiplier,
-                    temperature: recipe.temperature, dish_type: recipe.dish_type,
-                    description: recipe.effect_name + " LV" + string(recipe.level) + " / 효과 " + string(quality.effect_multiplier) + "배"
-                };
-            }
+                    effect_key: recipe.effect,
+                    effect_level: recipe.effect_level,
+                    description: cooking_effect_name(recipe.effect) + " LV" + string(recipe.effect_level)
+            };
         }
     }
 }
@@ -80,6 +78,7 @@ function cooking_is_open(_minutes)
 function cooking_notice(_text)
 {
     cooking_initialize(); global.cooking_state.notice = _text; global.cooking_state.notice_remaining = 3;
+    if(instance_exists(obj_cooking_room))with(obj_cooking_room){inventory_error="";inventory_error_timer=0;}
 }
 
 function cooking_new_customer()
@@ -89,7 +88,7 @@ function cooking_new_customer()
     var index = irandom(max(0, count - 1));
     if (count > 1 && global.cooking_recipes[index].id == state.order_recipe) index = (index + 1) mod count;
     var recipe = global.cooking_recipes[index];
-    state.order_recipe = recipe.id; state.order_text = recipe.orders[irandom(array_length(recipe.orders) - 1)];
+    state.order_recipe = recipe.id; state.order_text = customer_dialogue_for_recipe(recipe.id);
     state.phase = "offer"; state.accepted = false; state.customer_number++;
     state.review_remaining = 0; state.review_text = "";
 }
@@ -122,6 +121,7 @@ function cooking_try_enter(_player, _building)
 function cooking_leave()
 {
     cooking_initialize(); var point = global.cooking_state.outside;
+    var hero=instance_find(obj_main_chr_girl,0);if(hero!=noone)with(hero)inventory_close();
     var destination = rm_main; var px = 1440; var py = 396;
     if (is_struct(point)) { destination = asset_get_index(point.room_name); px = point.x; py = point.y; }
     if (!room_exists(destination) || destination == rm_restaurant || destination == rm_kitchen) destination = rm_main;
@@ -157,9 +157,8 @@ function cooking_start_station(_station_index, _item_id)
     var match = cooking_match_input(inventory_get_item(_item_id), station.kind);
     if (is_undefined(match)) return false;
     var item = inventory_get_item(_item_id);
-    var quality = cooking_quality(variable_struct_get(item, "quality_id"));
     station.state = "cooking"; station.recipe_id = match.recipe.id; station.step = match.step;
-    station.quality_id = quality.id; station.elapsed = 0;
+    station.elapsed = 0;
     return true;
 }
 
@@ -177,7 +176,7 @@ function cooking_station_item(_index)
 {
     var station = global.cooking_state.stations[_index];
     var recipe = cooking_recipe(station.recipe_id);
-    return is_undefined(recipe) ? undefined : inventory_get_item(cooking_output_id(recipe, station.step, station.quality_id));
+    return is_undefined(recipe) ? undefined : inventory_get_item(cooking_output_id(recipe, station.step));
 }
 
 function cooking_transfer_station(_from, _to)
@@ -199,7 +198,7 @@ function cooking_collect(_index)
     if (is_undefined(item) || inventory_stack_add(item.id, 1) != 0) { cooking_notice("인벤토리가 가득 찼습니다. 칸을 비워 주세요."); return false; }
     inventory_notify_gain(item.id, 1); codex_discover(item.id);
     global.cooking_state.stations[_index] = cooking_empty_station(stations[_index].kind);
-    cooking_notice(item.name + " 완성!"); return true;
+    return true;
 }
 
 function cooking_advance(_seconds)
@@ -221,11 +220,6 @@ function cooking_advance(_seconds)
             station.elapsed = min(recipe.steps[station.step].seconds, station.elapsed + _seconds);
             if (station.elapsed >= recipe.steps[station.step].seconds) station.state = "ready";
         }
-        if (station.state == "ready")
-        {
-            var recipe = cooking_recipe(station.recipe_id);
-            if (recipe.steps[station.step].auto_collect) cooking_collect(i);
-        }
     }
 }
 
@@ -244,8 +238,8 @@ function cooking_order_matches(_item)
     if (is_undefined(_item) || _item.kind != "food") return false;
     var requested = cooking_recipe(global.cooking_state.order_recipe);
     if (is_undefined(requested)) return false;
-    return _item.effect_key == requested.effect && _item.effect_level >= requested.level
-        && _item.temperature == requested.temperature && _item.dish_type == requested.dish_type;
+    return _item.recipe_id == requested.id && _item.effect_key == requested.effect
+        && _item.effect_level >= requested.effect_level;
 }
 
 function cooking_serve(_slot_index, _expected_id)
@@ -262,11 +256,11 @@ function cooking_serve(_slot_index, _expected_id)
     if (correct)
     {
         var recipe = cooking_recipe(item.recipe_id);
-        var reward = round(recipe.price * item.effect_multiplier);
+        var reward = recipe.price;
         global.player_gold += reward;
-        state.review_text = "주문한 음식이네요. 잘 먹겠습니다! +" + string(reward) + " G";
+        state.review_text = customer_dialogue_after_serving(true, reward);
     }
-    else state.review_text = "제가 주문한 음식이 아니네요. 다음에 오겠습니다.";
+    else state.review_text = customer_dialogue_after_serving(false, 0);
     return true;
 }
 
@@ -285,7 +279,7 @@ function cooking_restore(_saved)
         if (!array_contains(["offer","accepted","review"], state.phase)) state.phase = "offer";
         state.accepted = state.phase == "accepted";
         var text = variable_struct_get(_saved, "order_text");
-        state.order_text = is_string(text) ? text : cooking_recipe(order).orders[0];
+        state.order_text = is_string(text) ? text : customer_dialogue_for_recipe(order);
         var review = variable_struct_get(_saved, "review_text"); state.review_text = is_string(review) ? review : "";
         var remaining = variable_struct_get(_saved, "review_remaining");state.review_remaining = is_numeric(remaining) ? clamp(remaining,0,1.8) : 0;
     }
@@ -316,7 +310,7 @@ function cooking_restore(_saved)
         var status=variable_struct_get(job,"state");if(status!="cooking"&&status!="ready")continue;
         var elapsed=variable_struct_get(job,"elapsed");if(!is_numeric(elapsed))elapsed=0;
         state.stations[i]={kind:state.stations[i].kind,state:status,recipe_id:recipe.id,step:step,
-            quality_id:cooking_quality(variable_struct_get(job,"quality_id")).id,elapsed:clamp(elapsed,0,recipe.steps[step].seconds)};
+            elapsed:clamp(elapsed,0,recipe.steps[step].seconds)};
     }
 }
 

@@ -290,16 +290,19 @@ function scr_item_book_draw(_controller)
             if (visible_index >= array_length(entries)) continue;
             var is_selected = visible_index < array_length(entries)
                 && visible_index == _controller.item_book_selected_index;
-            draw_sprite_ext(spr_item_book_frame, is_selected ? 1 : 0,
+            var item = _controller.item_book_entries[entries[visible_index]];
+            var found_high_quality = variable_struct_exists(item, "high_quality_id")
+                && codex_was_found(item.high_quality_id);
+            var frame = found_high_quality ? (is_selected ? 3 : 2) : (is_selected ? 1 : 0);
+            draw_sprite_ext(spr_item_book_frame, frame,
                 left + (cell_x + 16) * scale, top + (cell_y + 32) * scale,
                 scale, scale, 0, c_white, 1);
-            var item = _controller.item_book_entries[entries[visible_index]];
             var found = codex_was_found(item.id);
             if (item.sprite != noone && sprite_exists(item.sprite))
             {
-                var frame = found ? 0 : 1;
-                frame = clamp(frame, 0, sprite_get_number(item.sprite) - 1);
-                draw_sprite_ext(item.sprite, frame,
+                var crop_sprite_frame = found ? 0 : 1;
+                crop_sprite_frame = clamp(crop_sprite_frame, 0, sprite_get_number(item.sprite) - 1);
+                draw_sprite_ext(item.sprite, crop_sprite_frame,
                     left + (cell_x + 16) * scale, top + (cell_y + 16) * scale,
                     scale, scale, 0, c_white, 1);
             }

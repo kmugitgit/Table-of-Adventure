@@ -5,8 +5,8 @@
   "isDnD":false,
   "name":"scr_fishing",
   "parent":{
-    "name":"Scripts",
-    "path":"folders/Scripts.yy",
+    "name":"fishing",
+    "path":"folders/Scripts/fishing.yy",
   },
   "resourceType":"GMScript",
   "resourceVersion":"2.0",

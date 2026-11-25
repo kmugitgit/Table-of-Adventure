@@ -530,19 +530,24 @@ draw_game_hud = function()
     draw_set_alpha(1);
     if (surface_set_target(game_hud_surface))
     {
+        var kitchen_hud = room == rm_kitchen;
+        var hud_bottom = kitchen_hud ? 48 : 80;
         draw_clear_alpha(c_black, 0);
         draw_set_color(make_color_rgb(31, 22, 18));
-        draw_rectangle(2, 3, 215, 83, false);
+        draw_rectangle(2, 3, 215, hud_bottom + 3, false);
         draw_set_color(make_color_rgb(163, 112, 61));
-        draw_rectangle(0, 0, 212, 80, false);
+        draw_rectangle(0, 0, 212, hud_bottom, false);
         draw_set_color(make_color_rgb(76, 47, 29));
-        draw_rectangle(2, 2, 210, 78, false);
+        draw_rectangle(2, 2, 210, hud_bottom - 2, false);
         draw_set_color(make_color_rgb(98, 65, 39));
-        draw_rectangle(5, 5, 207, 75, false);
-        draw_set_color(make_color_rgb(119, 81, 46));
-        draw_line(7, 49, 205, 49);
-        draw_line(10, 72, 47, 72);
-        draw_line(154, 72, 202, 72);
+        draw_rectangle(5, 5, 207, hud_bottom - 5, false);
+        if (!kitchen_hud)
+        {
+            draw_set_color(make_color_rgb(119, 81, 46));
+            draw_line(7, 49, 205, 49);
+            draw_line(10, 72, 47, 72);
+            draw_line(154, 72, 202, 72);
+        }
         draw_set_color(make_color_rgb(42, 56, 34));
         draw_rectangle(7, 7, 205, 44, false);
         draw_set_font(panel_font);
@@ -553,18 +558,21 @@ draw_game_hud = function()
         draw_text(14, 26, string(clock.day) + "일차");
         draw_set_halign(fa_right);
         draw_text_transformed(199, 30, clock.time_text, 2, 2, 0);
-        draw_set_color(make_color_rgb(236, 188, 103));
-        draw_circle(17, 62, 5, false);
-        draw_set_color(make_color_rgb(255, 221, 131));
-        draw_line(16, 59, 16, 64);
-        draw_set_halign(fa_left);
-        draw_set_color(make_color_rgb(238, 214, 174));
-        draw_text(28, 63, "보유 골드");
-        draw_set_halign(fa_right);
-        draw_set_color(make_color_rgb(255, 220, 133));
-        var gold_label = string(global.player_gold) + " G";
-        var gold_scale = min(1, 111 / max(1, string_width(gold_label)));
-        draw_text_transformed(199, 63, gold_label, gold_scale, gold_scale, 0);
+        if (!kitchen_hud)
+        {
+            draw_set_color(make_color_rgb(236, 188, 103));
+            draw_circle(17, 62, 5, false);
+            draw_set_color(make_color_rgb(255, 221, 131));
+            draw_line(16, 59, 16, 64);
+            draw_set_halign(fa_left);
+            draw_set_color(make_color_rgb(238, 214, 174));
+            draw_text(28, 63, "보유 골드");
+            draw_set_halign(fa_right);
+            draw_set_color(make_color_rgb(255, 220, 133));
+            var gold_label = string(global.player_gold) + " G";
+            var gold_scale = min(1, 111 / max(1, string_width(gold_label)));
+            draw_text_transformed(199, 63, gold_label, gold_scale, gold_scale, 0);
+        }
         surface_reset_target();
         var gui_width = display_get_gui_width();
         var gui_height = display_get_gui_height();

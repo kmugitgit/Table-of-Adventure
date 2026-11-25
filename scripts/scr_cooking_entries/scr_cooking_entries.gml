@@ -1,15 +1,23 @@
 /// Cooking catalog. Keep IDs stable for saved food/orders/stations.
 // station: board / pot / mortar / pan / plate. Times below are REAL seconds.
 // The first step accepts the ingredient crop; later steps accept the previous output.
-// auto_collect is used for julienned carrot. Other final dishes require a click.
+// Completed station items stay on the station until dragged out.
 // Editing sprite replaces the temporary HeartBeet artwork for that recipe's outputs.
 function scr_cooking_entries()
 {
     return [
-        { id: "heartbeet_salad", name: "하트비트 샐러드", ingredient: "HeartBeet", sprite: spr_HeartBeet,
-          effect: "health_regen", effect_name: "체력 회복 증진", level: 1, temperature: "cold", dish_type: "salad", price: 90,
-          orders: ["체력 회복에 좋은 차가운 음식을 주세요.", "지친 몸을 회복할 수 있는 시원한 샐러드가 먹고 싶어요."],
-          steps: [ { station: "board", seconds: 4, name: "잘린 하트비트", auto_collect: false },
+        { 
+			id: "heartbeet_salad",
+			name: "하트비트 샐러드",
+			ingredient: "HeartBeet",
+			sprite: spr_HeartBeet,
+			effect: "health_regen",
+			effect_name: "체력 회복 증진",
+			level: 1, temperature: "cold",
+			dish_type: "salad",
+			price: 90,
+			orders: ["체력 회복에 좋은 차가운 음식을 주세요.", "지친 몸을 회복할 수 있는 시원한 샐러드가 먹고 싶어요."],
+			steps: [ { station: "board", seconds: 4, name: "잘린 하트비트", auto_collect: false },
                    { station: "plate", seconds: 3, name: "하트비트 샐러드", auto_collect: false } ] },
         { id: "heartbeet_soup", name: "하트비트 수프", ingredient: "HeartBeet", sprite: spr_HeartBeet,
           effect: "health_regen", effect_name: "체력 회복 증진", level: 1, temperature: "warm", dish_type: "soup", price: 60,
@@ -30,7 +38,7 @@ function scr_cooking_entries()
         { id: "icecarrot_pancake", name: "얼음당근전", ingredient: "IceCarrot", sprite: spr_IceCarrot,
           effect: "freeze_resist", effect_name: "빙결 저항", level: 1, temperature: "warm", dish_type: "pancake", price: 110,
           orders: ["추위를 견디게 해주는 따뜻한 전을 부탁해요.", "빙결 저항에 도움이 되는 바삭한 전이 먹고 싶어요."],
-          steps: [ { station: "board", seconds: 4, name: "채 썬 얼음당근", auto_collect: true },
+          steps: [ { station: "board", seconds: 4, name: "채 썬 얼음당근", auto_collect: false },
                    { station: "pan", seconds: 5, name: "얼음당근전", auto_collect: false } ] }
     ];
 }

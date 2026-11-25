@@ -1,5 +1,5 @@
 /// 도감 항목과 획득 이력
-// 아이템을 얻는 코드에서 codex_discover(spr_seed_HeartBeet)를 호출하세요.
+// 작물 아이템을 얻을 때 codex_discover("crop_HeartBeet_normal")처럼 기록합니다.
 // 농기구는 codex_discover("hoe_wood"), codex_discover("shovel_copper")처럼 기록합니다.
 // 단계 ID는 wood, copper, iron, gold, titanium 순서입니다.
 
@@ -11,6 +11,11 @@ function codex_discover(_item)
 {
     var key = is_string(_item) ? _item : sprite_get_name(_item);
     if (!variable_global_exists("codex_discovered")) global.codex_discovered = [];
+    if (string_copy(key, 1, 5) == "crop_" && string_copy(key, string_length(key) - 4, 5) == "_high")
+    {
+        var base_key = string_copy(key, 1, string_length(key) - 4) + "normal";
+        if (!array_contains(global.codex_discovered, base_key)) array_push(global.codex_discovered, base_key);
+    }
     if (!array_contains(global.codex_discovered, key)) array_push(global.codex_discovered, key);
 }
 
@@ -78,6 +83,14 @@ function scr_item_book_catalog()
     return [seeds, tools];
 }
 
+function codex_draw_quality_overlay(_item, _centre_x, _centre_y, _scale_x, _scale_y)
+{
+    if (!variable_struct_exists(_item, "quality_id") || _item.quality_id != "high") return;
+    var overlay_x = _centre_x + (sprite_get_xoffset(spr_high_quality) - sprite_get_width(spr_high_quality) * 0.5) * _scale_x;
+    var overlay_y = _centre_y + (sprite_get_yoffset(spr_high_quality) - sprite_get_height(spr_high_quality) * 0.5) * _scale_y;
+    draw_sprite_ext(spr_high_quality, 0, overlay_x, overlay_y, _scale_x, _scale_y, 0, c_white, 1);
+}
+
 function codex_draw_item(_item, _bounds, _found)
 {
     var centre_x = (_bounds[0] + _bounds[2]) * 0.5;
@@ -97,6 +110,8 @@ function codex_draw_item(_item, _bounds, _found)
         var sprite_frame = variable_struct_exists(_item, "sprite_frame") ? _item.sprite_frame : 0;
         draw_sprite_stretched_ext(_item.sprite, sprite_frame, round(centre_x - icon_width * 0.5),
             round(centre_y - icon_height * 0.5), icon_width, icon_height, _item.colour, 1);
+        codex_draw_quality_overlay(_item, centre_x, centre_y,
+            icon_width / sprite_get_width(spr_high_quality), icon_height / sprite_get_height(spr_high_quality));
         if (previous_shader == -1) shader_reset();
         else shader_set(previous_shader);
     }
@@ -110,6 +125,5 @@ function codex_draw_item(_item, _bounds, _found)
         draw_set_color(_found ? _item.accent : make_color_rgb(105, 105, 105));
         draw_ellipse(centre_x - 3, centre_y - 3, centre_x + 3, centre_y + 3, false);
     }
-    if (_found) farming_draw_quality_badge(_item, _bounds);
 }
 

@@ -5,8 +5,8 @@
   "isDnD":false,
   "name":"scr_item_book",
   "parent":{
-    "name":"Scripts",
-    "path":"folders/Scripts.yy",
+    "name":"item_book",
+    "path":"folders/Scripts/item_book.yy",
   },
   "resourceType":"GMScript",
   "resourceVersion":"2.0",

@@ -642,6 +642,27 @@ function inventory_restore(_saved)
         if (string_copy(item_id, 1, 7) == "trowel_")
             item_id = "shovel_" + string_delete(item_id, 1, 7);
         item_id = fishing_migrate_item_id(item_id);
+        // Fold old crop grades into the two-grade system and old dish grades into one item.
+        if (string_copy(item_id, 1, 5) == "crop_")
+        {
+            var last_underscore = string_last_pos("_", item_id);
+            if (last_underscore > 0)
+            {
+                var old_grade = string_delete(item_id, 1, last_underscore);
+                if (old_grade == "fine" || old_grade == "excellent" || old_grade == "premium")
+                    item_id = string_copy(item_id, 1, last_underscore - 1) + "_high";
+            }
+        }
+        else if (string_copy(item_id, 1, 5) == "food_" || string_copy(item_id, 1, 9) == "prepared_")
+        {
+            var last_underscore = string_last_pos("_", item_id);
+            if (last_underscore > 0)
+            {
+                var old_grade = string_delete(item_id, 1, last_underscore);
+                if (old_grade == "normal" || old_grade == "fine" || old_grade == "excellent" || old_grade == "premium")
+                    item_id = string_copy(item_id, 1, last_underscore - 1);
+            }
+        }
         var item = inventory_get_item(item_id);
         if (is_undefined(item) || item.kind == "bag") continue;
         var restore_slot = -1;

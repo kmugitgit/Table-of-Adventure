@@ -6,7 +6,8 @@ function scr_item_book_entries()
 {
     return [
         {
-            id: "spr_seed_HeartBeet",
+            id: "crop_HeartBeet_normal",
+            high_quality_id: "crop_HeartBeet_high",
             name: "하트비트",
             tag: "plant",
             sprite: spr_HeartBeet,
@@ -15,7 +16,8 @@ function scr_item_book_entries()
             cultivated_land: "dirt"
         },
         {
-            id: "spr_seed_Hellapeno",
+            id: "crop_Hellapeno_normal",
+            high_quality_id: "crop_Hellapeno_high",
             name: "헬라피뇨",
             tag: "plant",
             sprite: spr_Hellapeno,
@@ -24,7 +26,8 @@ function scr_item_book_entries()
             cultivated_land: "dirt"
         },
         {
-            id: "spr_seed_CloudPotato",
+            id: "crop_CloudPotato_normal",
+            high_quality_id: "crop_CloudPotato_high",
             name: "구름감자",
             tag: "plant",
             sprite: spr_CloudPotato,
@@ -33,7 +36,8 @@ function scr_item_book_entries()
             cultivated_land: "dirt"
         },
         {
-            id: "spr_seed_IceCarrot",
+            id: "crop_IceCarrot_normal",
+            high_quality_id: "crop_IceCarrot_high",
             name: "얼음당근",
             tag: "plant",
             sprite: spr_IceCarrot,
@@ -42,7 +46,8 @@ function scr_item_book_entries()
             cultivated_land: "dirt"
         },
         {
-            id: "spr_seed_Magmato",
+            id: "crop_Magmato_normal",
+            high_quality_id: "crop_Magmato_high",
             name: "마그마토",
             tag: "plant",
             sprite: spr_Magmato,
