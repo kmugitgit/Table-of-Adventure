@@ -1,0 +1,7 @@
+Method: built-in image_gen; one reference-based edit per asset.
+Assets: blue_fish, blue_marlin, coral, daegu, filefish, gizzard_shad, golden_sea_bream, grilled_eel, hairtail, mackerel, olive_flounder, pomfret, red_grouper, red_sea_bream, rock, rockfish, sand_flounder, sardine, striped_beakfish, trash, whale_shark, wooden_rod, yellowtail.
+
+Prompt template (replace {name} with each asset name):
+Use case: style-transfer. Edit target: the attached {name} game sprite. Redraw this exact subject as a clean native 32 by 32 pixel-art inventory sprite on a transparent background. Preserve recognizable species, original silhouette, orientation and colors. Simplify details deliberately for readability at 32x32. Crisp square pixels, limited palette, no blur, no antialiasing, no text, no border, no additional objects. Center the complete subject within 30x30 pixels of a 32x32 canvas; for the wooden fishing rod crop away original empty margins and retain the rod and fishing line. Output exact 32x32 PNG if possible.
+
+Postprocessing: alpha threshold 128, crop to visible bounds, fit within 30x30 preserving aspect ratio, nearest-neighbor sampling, center on transparent 32x32 canvas. Originals are unchanged. The png folder and ZIP contain final game-sized images; preview.png is enlarged for review.
