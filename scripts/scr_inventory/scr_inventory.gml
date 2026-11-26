@@ -3,7 +3,18 @@
 // 슬롯에는 id, quantity, 물뿌리개의 water, 도구의 area_level을 저장합니다.
 function inventory_seed_id(_seed)
 {
-    return _seed.sprite != noone ? sprite_get_name(_seed.sprite) : "seed_" + _seed.name;
+    return is_numeric(_seed.id) ? object_get_name(_seed.id) : _seed.id;
+}
+
+function inventory_migrate_item_id(_id)
+{
+    _id = fishing_migrate_item_id(_id);
+    _id = cooking_migrate_item_id(_id);
+    if (string_copy(_id, 1, 9) == "spr_seed_") return "obj_" + string_delete(_id, 1, 9) + "_seed";
+    if (string_copy(_id, 1, 4) == "spr_" && string_copy(_id, string_length(_id) - 4, 5) == "_seed")
+        return "obj_" + string_delete(_id, 1, 4);
+    if (_id == "inventory_expansion") return object_get_name(obj_inventory_expansion);
+    return _id;
 }
 
 function inventory_initialize()
@@ -17,6 +28,7 @@ function inventory_initialize()
         for (var i = 0; i < array_length(codex[0]); i++)
         {
             var seed = codex[0][i];
+            seed.id = inventory_seed_id(seed);
             seed.kind = "seed";
             global.inventory_definitions[$ seed.id] = seed;
         }
@@ -25,6 +37,9 @@ function inventory_initialize()
         for (var i = 0; i < array_length(codex[1]); i++)
         {
             var tool = codex[1][i];
+            var tool_object = tool.id;
+            tool.id = tool.inventory_id;
+            tool.object_id = tool_object;
             tool.kind = "tool";
             tool.tool_kind = tool_ids[i div 5];
             tool.tier = i mod 5;
@@ -33,10 +48,13 @@ function inventory_initialize()
             for (var j = 0; j < array_length(market_entries); j++)
             {
                 var market_entry = market_entries[j];
-                if (market_entry.tab == "tool" && market_entry.id == tool.tool_kind)
+                if (market_entry.tab == "tool" && variable_struct_exists(market_entry, "tool_kind"))
                 {
-                    base_price = market_entry.price;
-                    base_description = market_entry.description;
+                    if (market_entry.tool_kind == tool.tool_kind)
+                    {
+                        base_price = market_entry.price;
+                        base_description = market_entry.description;
+                    }
                 }
             }
             tool.price = base_price * tier_prices[tool.tier];
@@ -46,8 +64,9 @@ function inventory_initialize()
         for (var i = 0; i < array_length(market_entries); i++)
         {
             var upgrade = market_entries[i];
-            if (upgrade.id != "inventory_expansion") continue;
-            upgrade.id = "inventory_expansion";
+            if (upgrade.id != obj_inventory_expansion) continue;
+            upgrade.object_id = upgrade.id;
+            upgrade.id = object_get_name(upgrade.id);
             upgrade.kind = "bag";
             global.inventory_definitions[$ upgrade.id] = upgrade;
         }
@@ -55,6 +74,11 @@ function inventory_initialize()
         {
             var extra_entry = market_entries[i];
             if (extra_entry.tab != "item" && extra_entry.tab != "structure") continue;
+            if (is_numeric(extra_entry.id))
+            {
+                extra_entry.object_id = extra_entry.id;
+                extra_entry.id = object_get_name(extra_entry.id);
+            }
             extra_entry.kind = extra_entry.tab;
             extra_entry.colour = c_white;
             global.inventory_definitions[$ extra_entry.id] = extra_entry;
@@ -63,6 +87,11 @@ function inventory_initialize()
         cooking_register_items();
     }
     if (!variable_struct_exists(global.inventory_definitions, "crop_HeartBeet_normal")) farming_register_items();
+    if (!variable_global_exists("inventory_objects_bound"))
+    {
+        inventory_bind_objects();
+        global.inventory_objects_bound = true;
+    }
     if (!variable_global_exists("inventory_slots"))
     {
         global.inventory_slots = array_create(18, undefined);
@@ -77,6 +106,10 @@ function inventory_notify_gain(_id, _quantity)
     if (!variable_global_exists("inventory_gain_notices")) global.inventory_gain_notices = [];
     var item = inventory_get_item(_id);
     if (is_undefined(item)) return;
+    // Some UI paths place a finished item directly into a chosen slot instead of
+    // calling inventory_stack_add. Register every notified gain here as well.
+    codex_discover(item.object_id,
+        variable_struct_exists(item, "quality_id") ? item.quality_id : "normal");
     var notices = global.inventory_gain_notices;
     // Update the existing line when the same item is gained before its notice disappears.
     for (var i = 0; i < array_length(notices); i++)
@@ -121,14 +154,62 @@ function inventory_grant_starter_tools()
             for (var slot = target; slot < target + 9; slot++) global.inventory_slots[slot] = undefined;
         }
         var item_id = kinds[tool] + "_wood";
-        global.inventory_slots[target] = { id: item_id, quantity: 1 };
-        codex_discover(item_id);
+        global.inventory_slots[target] = inventory_make_slot(item_id, 1);
+        codex_discover(inventory_get_item(item_id).object_id);
     }
 }
 
 function inventory_get_item(_id)
 {
     return variable_struct_get(global.inventory_definitions, _id);
+}
+
+function inventory_object_for_item(_item_id)
+{
+    if (string_copy(_item_id, 1, 4) == "hoe_") return obj_hoe;
+    if (string_copy(_item_id, 1, 4) == "can_") return obj_watering_can;
+    if (string_copy(_item_id, 1, 7) == "shovel_") return obj_shovel;
+    if (string_copy(_item_id, 1, 7) == "sickle_") return obj_sickle;
+    if (string_copy(_item_id, 1, 4) == "rod_") return obj_fishing_rod;
+    var object_name = "obj_" + _item_id;
+    if (string_copy(_item_id, 1, 5) == "crop_")
+    {
+        var tail = string_delete(_item_id, 1, 5);
+        var split_at = string_last_pos("_", tail);
+        object_name = "obj_" + string_copy(tail, 1, split_at - 1);
+    }
+    else if (string_copy(_item_id, 1, 9) == "spr_seed_")
+        object_name = "obj_" + string_delete(_item_id, 1, 9) + "_seed";
+    else if (string_copy(_item_id, 1, 4) == "obj_") object_name = _item_id;
+    else if (_item_id == "inventory_expansion") object_name = "obj_inventory_expansion";
+    var object_asset = asset_get_index(object_name);
+    if (object_asset != -1 && object_exists(object_asset)) return object_asset;
+    return noone;
+}
+
+function inventory_bind_objects()
+{
+    var keys = variable_struct_get_names(global.inventory_definitions);
+    for (var i = 0; i < array_length(keys); i++)
+    {
+        var item = global.inventory_definitions[$ keys[i]];
+        item.object_id = inventory_object_for_item(item.id);
+        item.sprite = noone;
+        if (object_exists(item.object_id))
+        {
+            var object_sprite = object_get_sprite(item.object_id);
+            if (object_sprite != -1) item.sprite = object_sprite;
+        }
+        if (item.kind == "crop") item.sprite_frame = item.quality_id == "high" ? 1 : 0;
+        else if (item.kind == "tool")
+            item.sprite_frame = item.tool_kind == "rod" ? item.tier * 2 : item.tier;
+    }
+}
+
+function inventory_make_slot(_id, _quantity)
+{
+    var item = inventory_get_item(_id);
+    return { id: _id, object_id: is_undefined(item) ? noone : item.object_id, quantity: _quantity };
 }
 
 function inventory_tool_slot(_kind)
@@ -227,7 +308,7 @@ function inventory_buy(_id)
             // A tool upgrade replaces the old tool in its current slot.
             var water = item.kind == "tool" && item.tool_kind == "can"
                 && is_struct(global.inventory_slots[target]) ? inventory_water_amount(global.inventory_slots[target]) : 6;
-            global.inventory_slots[target] = { id: item.id, quantity: 1 };
+            global.inventory_slots[target] = inventory_make_slot(item.id, 1);
             if (item.kind == "tool" && item.tool_kind == "can") global.inventory_slots[target].water = water;
             if (item.kind == "tool")
             {
@@ -240,7 +321,7 @@ function inventory_buy(_id)
                 }
             }
         }
-        codex_discover(item.id);
+        codex_discover(item.object_id);
     }
     global.player_gold -= item.price;
     return "";
@@ -280,6 +361,7 @@ function inventory_item_stackable(_item)
 function inventory_stack_add(_id, _quantity)
 {
     var item = inventory_get_item(_id);
+    if (is_undefined(item)) return max(0, floor(_quantity));
     var stackable = inventory_item_stackable(item);
     var remaining = max(0, floor(_quantity));
     if (stackable)
@@ -298,9 +380,11 @@ function inventory_stack_add(_id, _quantity)
         var empty = inventory_empty_slot();
         if (empty == -1) break;
         var placed = stackable ? min(99, remaining) : 1;
-        global.inventory_slots[empty] = { id: _id, quantity: placed };
+        global.inventory_slots[empty] = inventory_make_slot(_id, placed);
         remaining -= placed;
     }
+    if (remaining < max(0, floor(_quantity))) codex_discover(item.object_id,
+        variable_struct_exists(item, "quality_id") ? item.quality_id : "normal");
     return remaining;
 }
 
@@ -330,7 +414,7 @@ function inventory_quick_move(_source_index)
     {
         if (!is_undefined(global.inventory_slots[i])) continue;
         var placed = stackable ? min(99, remaining) : 1;
-        global.inventory_slots[i] = { id: source.id, quantity: placed };
+        global.inventory_slots[i] = inventory_make_slot(source.id, placed);
         remaining -= placed;
     }
 
@@ -354,7 +438,7 @@ function inventory_quick_move(_source_index)
         {
             if (i == _source_index || !is_undefined(global.inventory_slots[i])) continue;
             var placed = stackable ? min(99, remaining) : 1;
-            global.inventory_slots[i] = { id: source.id, quantity: placed };
+            global.inventory_slots[i] = inventory_make_slot(source.id, placed);
             remaining -= placed;
         }
     }
@@ -431,7 +515,7 @@ function inventory_hold_right(_player, _slot_index)
     }
     if (is_undefined(target))
     {
-        global.inventory_slots[_slot_index] = { id: held.id, quantity: 1 };
+        global.inventory_slots[_slot_index] = inventory_make_slot(held.id, 1);
     }
     else if (target.id == held.id && target.quantity < 99)
     {
@@ -479,7 +563,7 @@ function inventory_distribute_held(_player, _slot_indices)
     {
         var slot_index = valid_slots[i];
         var target = global.inventory_slots[slot_index];
-        if (is_undefined(target)) global.inventory_slots[slot_index] = { id: held.id, quantity: each };
+        if (is_undefined(target)) global.inventory_slots[slot_index] = inventory_make_slot(held.id, each);
         else target.quantity += each;
     }
     held.quantity -= each * count;
@@ -536,7 +620,7 @@ function inventory_drag_restore_preview(_player)
     {
         var snapshot = _player.inventory_drag_snapshots[i];
         if (snapshot.occupied)
-            global.inventory_slots[snapshot.index] = { id: snapshot.id, quantity: snapshot.quantity };
+            global.inventory_slots[snapshot.index] = inventory_make_slot(snapshot.id, snapshot.quantity);
         else global.inventory_slots[snapshot.index] = undefined;
     }
     _player.inventory_held_stack = {
@@ -641,7 +725,7 @@ function inventory_restore(_saved)
         if (!is_string(item_id) || !is_numeric(quantity) || quantity < 1) continue;
         if (string_copy(item_id, 1, 7) == "trowel_")
             item_id = "shovel_" + string_delete(item_id, 1, 7);
-        item_id = fishing_migrate_item_id(item_id);
+        item_id = inventory_migrate_item_id(item_id);
         // Fold old crop grades into the two-grade system and old dish grades into one item.
         if (string_copy(item_id, 1, 5) == "crop_")
         {
@@ -663,7 +747,7 @@ function inventory_restore(_saved)
                     item_id = string_copy(item_id, 1, last_underscore - 1);
             }
         }
-        item_id = cooking_migrate_item_id(item_id);
+        item_id = inventory_migrate_item_id(item_id);
         var item = inventory_get_item(item_id);
         if (is_undefined(item) || item.kind == "bag") continue;
         var restore_slot = -1;
@@ -674,7 +758,7 @@ function inventory_restore(_saved)
         else
         {
             restore_slot = inventory_empty_slot();
-            if (restore_slot != -1) global.inventory_slots[restore_slot] = { id: item_id, quantity: 1 };
+            if (restore_slot != -1) global.inventory_slots[restore_slot] = inventory_make_slot(item_id, 1);
         }
         if (item.kind == "tool" && item.tool_kind == "can" && restore_slot != -1)
             global.inventory_slots[restore_slot].water = inventory_water_amount(saved);
@@ -684,7 +768,7 @@ function inventory_restore(_saved)
             if (is_numeric(saved_area))
                 global.inventory_slots[restore_slot].area_level = clamp(floor(saved_area), 0, item.tier);
         }
-        codex_discover(item_id);
+        codex_discover(item.object_id);
     }
     // Keep only the highest tier if an imported save contains duplicate tools.
     var kinds = ["hoe", "can", "shovel", "sickle", "rod"];
@@ -717,17 +801,17 @@ function market_stock_catalog()
         var entry = base[i];
         if (entry.tab == "seed")
         {
-            var seed = inventory_get_item(entry.id);
+            var seed = inventory_get_item(object_get_name(entry.id));
             if (!is_undefined(seed)) array_push(seeds, seed);
         }
-        else if (entry.id == "inventory_expansion")
+        else if (entry.id == obj_inventory_expansion)
         {
-            var bag = inventory_get_item(entry.id);
+            var bag = inventory_get_item(object_get_name(entry.id));
             if (!is_undefined(bag)) array_push(tools, bag);
         }
         else if (entry.tab == "tool")
         {
-            var kind = entry.id;
+            var kind = entry.tool_kind;
             var owned_slot = inventory_tool_slot(kind);
             var tier = owned_slot == -1 ? (kind == "rod" ? 0 : 1) : inventory_get_item(global.inventory_slots[owned_slot].id).tier + 1;
             if (tier < array_length(tier_ids))
@@ -739,9 +823,8 @@ function market_stock_catalog()
                         id: next.id,
                         name: tier_names[tier] + " " + entry.name,
                         tab: entry.tab,
-                        sprite: entry.sprite != noone ? entry.sprite : next.sprite,
-                        sprite_frame: variable_struct_exists(entry, "sprite_frame")
-                            ? entry.sprite_frame : next.sprite_frame,
+                        sprite: next.sprite,
+                        sprite_frame: next.sprite_frame,
                         description: entry.description,
                         price: next.price,
                         kind: next.kind,
@@ -753,17 +836,17 @@ function market_stock_catalog()
         }
         else if (entry.tab == "item")
         {
-            var market_item_entry = inventory_get_item(entry.id);
+            var market_item_entry = inventory_get_item(object_get_name(entry.id));
             if (!is_undefined(market_item_entry)) array_push(items, market_item_entry);
         }
         else if (entry.tab == "structure")
         {
-            var market_structure_entry = inventory_get_item(entry.id);
+            var market_structure_entry = inventory_get_item(object_get_name(entry.id));
             if (!is_undefined(market_structure_entry)) array_push(structures, market_structure_entry);
         }
         else
         {
-            var fallback_market_entry = inventory_get_item(entry.id);
+            var fallback_market_entry = inventory_get_item(object_get_name(entry.id));
             if (!is_undefined(fallback_market_entry)) array_push(items, fallback_market_entry);
         }
     }
@@ -798,9 +881,9 @@ function inventory_return_seed(_id)
     {
         slot = inventory_empty_slot();
         if (slot == -1) return false;
-        global.inventory_slots[slot] = { id: _id, quantity: 1 };
+        global.inventory_slots[slot] = inventory_make_slot(_id, 1);
     }
-    codex_discover(_id);
+    codex_discover(item.object_id);
     return true;
 }
 

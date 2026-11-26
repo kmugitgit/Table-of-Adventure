@@ -280,9 +280,26 @@ function terrain_draw_held_tool(_player, _behind)
     var slot = global.inventory_slots[_player.inventory_selected_slot];
     if (!is_struct(slot)) return;
     var item = inventory_get_item(slot.id);
-    if (is_undefined(item) || item.kind != "tool" || !sprite_exists(item.sprite)) return;
+    if (is_undefined(item) || !sprite_exists(item.sprite)) return;
+    if (item.kind != "tool")
+    {
+        // Show the selected hotbar item in the character's hand, like equipped tools.
+        var mirror = _player.facing == HeroFacing.Left ? -1 : 1;
+        var hand_x = _player.x + mirror * 8 * abs(_player.image_xscale);
+        var hand_y = _player.y + 9 * abs(_player.image_yscale);
+        var held_scale = abs(_player.image_yscale) * 0.65;
+        var held_frame = variable_struct_exists(item, "sprite_frame") ? item.sprite_frame : 0;
+        held_frame = clamp(held_frame, 0, sprite_get_number(item.sprite) - 1);
+        draw_sprite_ext(item.sprite, held_frame, hand_x + mirror * 3, hand_y - 2,
+            held_scale * mirror, held_scale, 0, c_white, _player.image_alpha);
+        return;
+    }
     var pose = terrain_held_tool_pose(_player, item);
-    draw_sprite_ext(item.sprite, item.sprite_frame, pose.x, pose.y,
+    var frame = variable_struct_exists(item, "sprite_frame") ? item.sprite_frame : 0;
+    if (item.tool_kind == "rod")
+        frame = item.tier * 2 + (fishing_busy(_player) ? 1 : 0);
+    frame = clamp(frame, 0, sprite_get_number(item.sprite) - 1);
+    draw_sprite_ext(item.sprite, frame, pose.x, pose.y,
         pose.xscale, pose.yscale, pose.angle, c_white, _player.image_alpha);
 }
 

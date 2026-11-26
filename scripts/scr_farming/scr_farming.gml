@@ -9,11 +9,11 @@ function farming_initialize()
         ],
         // Keep seed/product identities; only growth artwork currently shares HeartBeet.
         crops: [
-            { seed_id: "spr_seed_HeartBeet", product_id: "HeartBeet", name: "하트비트", sprite: spr_HeartBeet, growth_sprite: spr_HeartBeet_crop, growth_minutes: 240 },
-            { seed_id: "spr_seed_Hellapeno", product_id: "Hellapeno", name: "헬라피뇨", sprite: spr_Hellapeno, growth_sprite: spr_HeartBeet_crop, growth_minutes: 240 },
-            { seed_id: "spr_seed_CloudPotato", product_id: "CloudPotato", name: "구름감자", sprite: spr_CloudPotato, growth_sprite: spr_HeartBeet_crop, growth_minutes: 240 },
-            { seed_id: "spr_seed_IceCarrot", product_id: "IceCarrot", name: "얼음당근", sprite: spr_IceCarrot, growth_sprite: spr_HeartBeet_crop, growth_minutes: 240 },
-            { seed_id: "spr_seed_Magmato", product_id: "Magmato", name: "마그마토", sprite: spr_Magmato, growth_sprite: spr_HeartBeet_crop, growth_minutes: 240 }
+            { seed_id: "obj_HeartBeet_seed", object_id: obj_HeartBeet, product_id: "HeartBeet", name: "하트비트", growth_sprite: spr_HeartBeet_crop, growth_minutes: 240 },
+            { seed_id: "obj_Hellapeno_seed", object_id: obj_Hellapeno, product_id: "Hellapeno", name: "헬라피뇨", growth_sprite: spr_HeartBeet_crop, growth_minutes: 240 },
+            { seed_id: "obj_CloudPotato_seed", object_id: obj_CloudPotato, product_id: "CloudPotato", name: "구름감자", growth_sprite: spr_HeartBeet_crop, growth_minutes: 240 },
+            { seed_id: "obj_IceCarrot_seed", object_id: obj_IceCarrot, product_id: "IceCarrot", name: "얼음당근", growth_sprite: spr_HeartBeet_crop, growth_minutes: 240 },
+            { seed_id: "obj_Magmato_seed", object_id: obj_Magmato, product_id: "Magmato", name: "마그마토", growth_sprite: spr_HeartBeet_crop, growth_minutes: 240 }
         ]
     };
 }
@@ -39,9 +39,9 @@ function farming_register_items()
             var quality = qualities[rank];
             var item_id = "crop_" + crop.product_id + "_" + quality.id;
             global.inventory_definitions[$ item_id] = {
-                id: item_id, kind: "crop", tab: "item", price: 0,
+                id: item_id, object_id: crop.object_id, kind: "crop", tab: "item", price: 0,
                 name: crop.name + (rank > 0 ? " (" + quality.name + ")" : ""),
-                sprite: crop.sprite, sprite_frame: 0, colour: c_white,
+                sprite_frame: rank, colour: c_white,
                 description: quality.name + " 품질의 " + crop.name + "입니다.",
                 base_crop_id: crop.product_id, seed_id: crop.seed_id,
                 quality_id: quality.id
@@ -152,7 +152,6 @@ function farming_harvest(_crop_index)
     // Adding one item is atomic: a full bag leaves the crop, age and quality intact.
     if (inventory_stack_add(item_id, 1) != 0) return false;
     inventory_notify_gain(item_id, 1);
-    codex_discover(item_id);
     array_delete(global.planted_crops, _crop_index, 1);
     return true;
 }

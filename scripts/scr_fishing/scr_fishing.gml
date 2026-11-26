@@ -16,8 +16,10 @@ function fishing_migrate_item_id(_id)
     {
         var prefix = old_prefixes[i];
         if (string_copy(_id, 1, string_length(prefix)) == prefix)
-            return "fish_" + string_delete(_id, 1, string_length(prefix));
+            return "obj_" + string_delete(_id, 1, string_length(prefix));
     }
+    if (string_copy(_id, 1, 5) == "fish_") return "obj_" + string_delete(_id, 1, 5);
+    if (string_copy(_id, 1, 9) == "obj_fish_") return "obj_" + string_delete(_id, 1, 9);
     return _id;
 }
 
@@ -39,10 +41,10 @@ function fishing_register_items()
     for (var i = 0; i < array_length(global.fishing_entries); i++)
     {
         var entry = global.fishing_entries[i];
-        var item_id = "fish_" + entry.id;
+        var item_id = object_get_name(entry.id);
         global.inventory_definitions[$ item_id] = {
-            id: item_id, kind: "fish", tab: "item", name: entry.name,
-            sprite: entry.sprite, sprite_frame: 0, colour: c_white, price: 0,
+            id: item_id, object_id: entry.id, kind: "fish", tab: "item", name: entry.name,
+            sprite_frame: 0, colour: c_white, price: 0,
             habitat: entry.habitat, fish_tier: entry.tier,
             description: "서식지: " + fishing_habitat_name(entry.habitat) + " / " + string(entry.tier) + "티어"
         };
@@ -51,11 +53,11 @@ function fishing_register_items()
 
 function fishing_book_entries(_base)
 {
-    fishing_initialize();
-    for (var i = 0; i < array_length(global.fishing_entries); i++)
+    var entries = scr_fishing_entries();
+    for (var i = 0; i < array_length(entries); i++)
     {
-        var entry = global.fishing_entries[i];
-        array_push(_base, { id: "fish_" + entry.id, name: entry.name, sprite: entry.sprite,
+        var entry = entries[i];
+        array_push(_base, { id: entry.id, name: entry.name,
             tag: "fish", effects: [], cultivated_land: "water",
             description: "서식지: " + fishing_habitat_name(entry.habitat) + " / " + string(entry.tier) + "티어" });
     }
@@ -215,9 +217,9 @@ function fishing_complete(_player)
 {
     var action = _player.fishing;
     if (action.state != "challenge" || action.reward_granted || action.key_index < array_length(action.sequence)) return false;
-    var item_id = "fish_" + action.entry.id;
+    var item_id = object_get_name(action.entry.id);
     if (inventory_stack_add(item_id, 1) != 0) { fishing_result(_player, "물고기를 놓쳤다!", false); return false; }
-    action.reward_granted = true; codex_discover(item_id); inventory_notify_gain(item_id, 1);
+    action.reward_granted = true; inventory_notify_gain(item_id, 1);
     action.state = "reeling"; action.elapsed = 0;
     action.from_x = action.bobber_x; action.from_y = action.bobber_y;
     return true;
@@ -330,8 +332,8 @@ function fishing_draw_world(_player)
     draw_set_alpha(1);
     if (action.state == "reeling")
     {
-        var sprite = action.entry.sprite; var size = 8;
-        draw_sprite_stretched(sprite, 0, action.bobber_x - size / 2, action.bobber_y - size / 2, size, size);
+        draw_set_color(make_color_rgb(245, 225, 161));
+        draw_circle(action.bobber_x, action.bobber_y, 4, false);
     }
     else
     {

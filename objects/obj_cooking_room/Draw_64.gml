@@ -45,7 +45,7 @@ if(surface_exists(surface)&&surface_set_target(surface))
     }
    }
    if(is_struct(drag)&&(drag.kind=="table"?(drag.moved||mouse_check_button(mb_left)):(drag.moved&&drag.kind=="station"))){
-    var drag_pointer=cooking_ui_pointer();var size=(drag.kind=="table"?96*1.2:44)*layout.scale;
+    var drag_pointer=cooking_ui_pointer();var size=(drag.kind=="table"?96*1.2:80)*layout.scale;
     var dragged_item=inventory_get_item(drag.id);
     if(!is_undefined(dragged_item)){
      var drag_x=drag_pointer.x+(drag.kind=="table"&&variable_struct_exists(drag,"offset_x")?drag.offset_x:0);

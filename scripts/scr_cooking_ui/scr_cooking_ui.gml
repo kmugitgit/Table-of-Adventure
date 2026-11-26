@@ -210,9 +210,18 @@ function cooking_ui_table_store_inventory(_ui,_table_index,_slot_index)
     if(_table_index<0||_table_index>=array_length(items)||_slot_index<0||_slot_index>=array_length(global.inventory_slots))return false;
     var table_item=items[_table_index];var target=global.inventory_slots[_slot_index];
     var definition=inventory_get_item(table_item.id);if(is_undefined(definition))return false;
-    if(!is_struct(target)){global.inventory_slots[_slot_index]={id:table_item.id,quantity:1};array_delete(items,_table_index,1);return true;}
-    if(target.id==table_item.id&&inventory_item_stackable(definition)&&target.quantity<99){target.quantity++;array_delete(items,_table_index,1);return true;}
-    if(target.quantity==1){global.inventory_slots[_slot_index]={id:table_item.id,quantity:1};table_item.id=target.id;return true;}
+    if(!is_struct(target)){
+        global.inventory_slots[_slot_index]=inventory_make_slot(table_item.id,1);array_delete(items,_table_index,1);
+        inventory_notify_gain(table_item.id,1);return true;
+    }
+    if(target.id==table_item.id&&inventory_item_stackable(definition)&&target.quantity<99){
+        target.quantity++;array_delete(items,_table_index,1);inventory_notify_gain(table_item.id,1);return true;
+    }
+    if(target.quantity==1){
+        var gained_id=table_item.id;
+        global.inventory_slots[_slot_index]=inventory_make_slot(gained_id,1);table_item.id=target.id;
+        inventory_notify_gain(gained_id,1);return true;
+    }
     return false;
 }
 // Transfer a ready station output directly into the exact inventory slot under the cursor.
@@ -225,11 +234,11 @@ function cooking_ui_station_store_inventory(_station_index,_slot_index,_expected
     var item=cooking_station_item(_station_index);
     if(is_undefined(item)||item.id!=_expected_id)return false;
     var target=global.inventory_slots[_slot_index];
-    if(!is_struct(target))global.inventory_slots[_slot_index]={id:item.id,quantity:1};
+    if(!is_struct(target))global.inventory_slots[_slot_index]=inventory_make_slot(item.id,1);
     else if(target.id==item.id&&inventory_item_stackable(item)&&target.quantity<99)target.quantity++;
     else return false;
     global.cooking_state.stations[_station_index]=cooking_empty_station(job.kind);
-    inventory_notify_gain(item.id,1);codex_discover(item.id);
+    inventory_notify_gain(item.id,1);
     return true;
 }
 function cooking_ui_step(_ui)
@@ -259,6 +268,15 @@ function cooking_ui_step(_ui)
         _ui.drag=undefined;_ui.table_drag=undefined;
         var held=hero.inventory_held_stack;var held_item=inventory_get_item(held.id);
         if(!is_undefined(held_item)&&array_contains(["crop","prepared","food"],held_item.kind)){
+            var target_station=cooking_ui_station_at(_ui,point);
+            if(target_station!=-1){
+                if(cooking_start_station(target_station,held.id)){
+                    held.quantity--;if(held.quantity<=0){hero.inventory_held_stack=undefined;hero.inventory_held_source=-1;}
+                    return;
+                }
+                state.notice_remaining=0;_ui.inventory_error="이 재료는 이 조리기구에 사용할 수 없습니다.";_ui.inventory_error_timer=2.5;
+                return;
+            }
             if(array_length(state.table_items)>=60){cooking_notice("작업대가 가득 찼습니다.");return;}
             var place_x=point.x+_ui.counter_scroll;var place_y=point.y;
             if(!cooking_ui_hit(point,[24,262,936,512])){place_x=480+_ui.counter_scroll;place_y=390;}

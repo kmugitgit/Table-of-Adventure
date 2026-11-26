@@ -2,12 +2,12 @@
 function customer_dialogue_for_recipe(_recipe_id)
 {
     var entries = [
-        { recipe_id: "heartbeet_salad", lines: ["체력 회복에 좋은 차가운 음식을 주세요.", "지친 몸을 회복할 수 있는 시원한 샐러드가 먹고 싶어요."] },
-        { recipe_id: "heartbeet_soup", lines: ["체력 회복에 좋은 따뜻한 음식을 주세요.", "기운을 되찾을 수 있는 따뜻한 수프를 부탁해요."] },
-        { recipe_id: "hellapeno_sauce", lines: ["화염 저항에 도움이 되는 매콤한 소스를 주세요.", "약한 불길을 견딜 수 있게 해주는 소스가 필요해요."] },
-        { recipe_id: "cloudpotato_soup", lines: ["발걸음이 빨라지는 따뜻한 음식을 부탁해요.", "긴 여행길을 더 빠르게 걸을 수 있는 수프가 먹고 싶어요."] },
-        { recipe_id: "magmato_soup", lines: ["강한 불길도 견딜 수 있는 따뜻한 음식을 주세요.", "화염 저항이 강한 2단계 수프를 부탁해요."] },
-        { recipe_id: "icecarrot_pancake", lines: ["추위를 견디게 해주는 따뜻한 전을 부탁해요.", "빙결 저항에 도움이 되는 바삭한 전이 먹고 싶어요."] }
+        { recipe_id: obj_HeartBeet_salad, lines: ["체력 회복에 좋은 차가운 음식을 주세요.", "지친 몸을 회복할 수 있는 시원한 샐러드가 먹고 싶어요."] },
+        { recipe_id: obj_HeartBeet_soup, lines: ["체력 회복에 좋은 따뜻한 음식을 주세요.", "기운을 되찾을 수 있는 따뜻한 수프를 부탁해요."] },
+        { recipe_id: obj_hellapeno_sauce, lines: ["화염 저항에 도움이 되는 매콤한 소스를 주세요.", "약한 불길을 견딜 수 있게 해주는 소스가 필요해요."] },
+        { recipe_id: obj_cloudpotato_soup, lines: ["발걸음이 빨라지는 따뜻한 음식을 부탁해요.", "긴 여행길을 더 빠르게 걸을 수 있는 수프가 먹고 싶어요."] },
+        { recipe_id: obj_magmato_soup, lines: ["강한 불길도 견딜 수 있는 따뜻한 음식을 주세요.", "화염 저항이 강한 2단계 수프를 부탁해요."] },
+        { recipe_id: obj_icecarrot_pancake, lines: ["추위를 견디게 해주는 따뜻한 전을 부탁해요.", "빙결 저항에 도움이 되는 바삭한 전이 먹고 싶어요."] }
     ];
     for (var i = 0; i < array_length(entries); i++)
     {

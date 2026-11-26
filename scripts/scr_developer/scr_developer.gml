@@ -46,7 +46,7 @@ function developer_give(_item_id,_amount)
     var added=0;
     if(item.kind=="tool"){
         var slot=inventory_tool_slot(item.tool_kind);if(slot==-1)slot=inventory_empty_slot();
-        if(slot!=-1){global.inventory_slots[slot]={id:item.id,quantity:1};added=1;
+        if(slot!=-1){global.inventory_slots[slot]=inventory_make_slot(item.id,1);added=1;
             for(var i=0;i<array_length(global.inventory_slots);i++){
                 if(i==slot||!is_struct(global.inventory_slots[i]))continue;
                 var other_item=inventory_get_item(global.inventory_slots[i].id);
@@ -55,7 +55,7 @@ function developer_give(_item_id,_amount)
             if(item.tool_kind=="can")global.inventory_slots[slot].water=inventory_water_capacity(global.inventory_slots[slot]);
         }
     }else added=_amount-inventory_stack_add(_item_id,_amount);
-    if(added>0){codex_discover(_item_id);inventory_notify_gain(_item_id,added);}
+    if(added>0){codex_discover(item.object_id,variable_struct_exists(item,"quality_id")?item.quality_id:"normal");inventory_notify_gain(_item_id,added);}
     global.developer.message=item.name+" "+string(added)+"개 지급"+(added<_amount&&item.kind!="tool"?" (가방 공간 부족)":"");
     developer_refresh_shop();return added;
 }
@@ -193,7 +193,7 @@ function developer_action(_key)
                 if(found!=-1&&cooking_serve(found,global.inventory_slots[found].id))d.message="정답 요리를 제출했습니다.";else d.message="주문 수락과 정답 요리 보유가 필요합니다.";}break;
         case "fish_prev":d.fish=(d.fish+array_length(global.fishing_entries)-1) mod array_length(global.fishing_entries);break;
         case "fish_next":d.fish=(d.fish+1) mod array_length(global.fishing_entries);break;
-        case "fish_give":developer_give("fish_"+global.fishing_entries[d.fish].id,d.quantity);break;
+        case "fish_give":developer_give(object_get_name(global.fishing_entries[d.fish].id),d.quantity);break;
         case "bite":if(h!=noone&&h.fishing.state=="waiting"){h.fishing.wait_remaining=0;fishing_start_challenge(h);}else d.message="찌를 던진 뒤 입질 대기 중 사용하세요.";break;
         case "catch":if(h!=noone&&h.fishing.state=="challenge"){h.fishing.key_index=array_length(h.fishing.sequence);fishing_complete(h);}else d.message="입질 후 입력 도전 중에 사용하세요.";break;
         case "cancel_fish":if(h!=noone)fishing_result(h,"낚시를 취소했습니다.",false);break;
@@ -204,7 +204,7 @@ function developer_action(_key)
         case "select_slot":if(h!=noone)h.inventory_selected_slot=d.slot;break;
         case "tools":var tiers=["wood","copper","iron","gold","titanium"];var kinds=["hoe","can","shovel","sickle","rod"];for(var i=0;i<5;i++)developer_give(kinds[i]+"_"+tiers[d.tool_tier],1);break;
         case "tier":d.tool_tier=(d.tool_tier+1) mod 5;break;
-        case "book":var keys=variable_struct_get_names(global.inventory_definitions);for(var i=0;i<array_length(keys);i++)codex_discover(keys[i]);break;
+        case "book":var keys=variable_struct_get_names(global.inventory_definitions);for(var i=0;i<array_length(keys);i++)codex_discover(inventory_get_item(keys[i]).object_id);break;
     }
 }
 function developer_commit()

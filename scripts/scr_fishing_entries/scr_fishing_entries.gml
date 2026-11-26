@@ -7,156 +7,134 @@ function scr_fishing_entries()
 {
     return [
         {
-            id: "crucian",
+            id: obj_crucian,
             name: "붕어",
-            sprite: spr_HeartBeet,
             habitat: "water",
             tier: 5
         },
         {
-            id: "minnow",
+            id: obj_minnow,
             name: "피라미",
-            sprite: spr_HeartBeet,
             habitat: "water",
             tier: 5
         },
         {
-            id: "loach",
+            id: obj_loach,
             name: "미꾸라지",
-            sprite: spr_HeartBeet,
             habitat: "water",
             tier: 5
         },
         {
-            id: "carp",
+            id: obj_carp,
             name: "잉어",
-            sprite: spr_HeartBeet,
             habitat: "water",
             tier: 4
         },
         {
-            id: "catfish",
+            id: obj_catfish,
             name: "메기",
-            sprite: spr_HeartBeet,
             habitat: "water",
             tier: 4
         },
         {
-            id: "perch",
+            id: obj_perch,
             name: "쏘가리",
-            sprite: spr_HeartBeet,
             habitat: "water",
             tier: 3
         },
         {
-            id: "golden_carp",
+            id: obj_golden_carp,
             name: "황금잉어",
-            sprite: spr_HeartBeet,
             habitat: "water",
             tier: 2
         },
         {
-            id: "king",
+            id: obj_king,
             name: "강의 왕",
-            sprite: spr_HeartBeet,
             habitat: "water",
             tier: 1
         },
         {
-            id: "smelt",
+            id: obj_smelt,
             name: "빙어",
-            sprite: spr_HeartBeet,
             habitat: "water",
             tier: 5
         },
         {
-            id: "minifish",
+            id: obj_minifish,
             name: "송사리",
-            sprite: spr_HeartBeet,
             habitat: "water",
             tier: 5
         },
         {
-            id: "bass",
+            id: obj_bass,
             name: "배스",
-            sprite: spr_HeartBeet,
             habitat: "water",
             tier: 4
         },
         {
-            id: "bluegill",
+            id: obj_bluegill,
             name: "블루길",
-            sprite: spr_HeartBeet,
             habitat: "water",
             tier: 4
         },
         {
-            id: "snakehead",
+            id: obj_snakehead,
             name: "가물치",
-            sprite: spr_HeartBeet,
             habitat: "water",
             tier: 3
         },
         {
-            id: "silver_smelt",
+            id: obj_silver_smelt,
             name: "은빛빙어",
-            sprite: spr_HeartBeet,
             habitat: "water",
             tier: 2
         },
         {
-            id: "guardian",
+            id: obj_guardian,
             name: "호수의 수호자",
-            sprite: spr_HeartBeet,
             habitat: "water",
             tier: 1
         },
         {
-            id: "anchovy",
+            id: obj_anchovy,
             name: "멸치",
-            sprite: spr_HeartBeet,
             habitat: "water",
             tier: 5
         },
         {
-            id: "goby",
+            id: obj_goby,
             name: "망둑어",
-            sprite: spr_HeartBeet,
             habitat: "water",
             tier: 5
         },
         {
-            id: "mackerel",
+            id: obj_mackerel,
             name: "고등어",
-            sprite: spr_HeartBeet,
             habitat: "water",
             tier: 4
         },
         {
-            id: "flatfish",
+            id: obj_flatfish,
             name: "가자미",
-            sprite: spr_HeartBeet,
             habitat: "water",
             tier: 4
         },
         {
-            id: "bream",
+            id: obj_bream,
             name: "도미",
-            sprite: spr_HeartBeet,
             habitat: "water",
             tier: 3
         },
         {
-            id: "tuna",
+            id: obj_tuna,
             name: "참치",
-            sprite: spr_HeartBeet,
             habitat: "water",
             tier: 2
         },
         {
-            id: "ancient",
+            id: obj_ancient,
             name: "고대어",
-            sprite: spr_HeartBeet,
             habitat: "water",
             tier: 1
         }

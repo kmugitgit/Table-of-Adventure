@@ -22,10 +22,30 @@ function cooking_reset()
 
 function cooking_recipe(_id)
 {
+    _id = cooking_recipe_object_id(_id);
     cooking_initialize();
     for (var i = 0; i < array_length(global.cooking_recipes); i++)
         if (global.cooking_recipes[i].id == _id) return global.cooking_recipes[i];
     return undefined;
+}
+
+function cooking_recipe_object_id(_id)
+{
+    if (is_numeric(_id)) return _id;
+    switch (_id)
+    {
+        case "HeartBeet_chopped": case "heartbeet_chopped": case "prepared_HeartBeet_chopped": return obj_HeartBeet_chopped;
+        case "HeartBeet_shredded": case "heartbeet_shredded": return obj_HeartBeet_shredded;
+        case "HeartBeet_salad": case "heartbeet_salad": case "food_HeartBeet_salad": return obj_HeartBeet_salad;
+        case "HeartBeet_pancake": case "heartbeet_pancake": return obj_HeartBeet_pancake;
+        case "HeartBeet_soup": case "heartbeet_soup": return obj_HeartBeet_soup;
+        case "hellapeno_sauce": return obj_hellapeno_sauce;
+        case "cloudpotato_soup": return obj_cloudpotato_soup;
+        case "magmato_soup": return obj_magmato_soup;
+        case "icecarrot_shredded": case "prepared_icecarrot_shredded": return obj_icecarrot_shredded;
+        case "icecarrot_pancake": return obj_icecarrot_pancake;
+    }
+    return asset_get_index(_id);
 }
 
 function cooking_recipe_is_ingredient(_recipe_id)
@@ -37,7 +57,7 @@ function cooking_recipe_is_ingredient(_recipe_id)
 
 function cooking_output_id(_recipe, _step)
 {
-    return (cooking_recipe_is_ingredient(_recipe.id) ? "prepared_" : "food_") + _recipe.id;
+    return object_get_name(_recipe.id);
 }
 
 function cooking_migrate_item_id(_id)
@@ -52,17 +72,19 @@ function cooking_migrate_item_id(_id)
     }
     var suffix = string_copy(_id, string_length(_id) - 2, 3);
     if (suffix == "_s0" || suffix == "_s1") _id = string_delete(_id, string_length(_id) - 2, 3);
-    if (_id == "prepared_heartbeet_salad") return "prepared_heartbeet_chopped";
-    if (_id == "prepared_icecarrot_pancake") return "prepared_icecarrot_shredded";
-    return _id;
+    if (_id == "prepared_heartbeet_salad") _id = "prepared_HeartBeet_chopped";
+    if (_id == "prepared_icecarrot_pancake") _id = "prepared_icecarrot_shredded";
+    var recipe_name = string_copy(_id, 1, 5) == "food_" ? string_delete(_id, 1, 5) : string_delete(_id, 1, 9);
+    var recipe_object = cooking_recipe_object_id(recipe_name);
+    return object_exists(recipe_object) ? object_get_name(recipe_object) : _id;
 }
 
 function cooking_recipe_ingredient_item_id(_recipe)
 {
     farming_initialize();
     for (var i = 0; i < array_length(global.farming_rules.crops); i++)
-        if (global.farming_rules.crops[i].product_id == _recipe.ingredient)
-            return "crop_" + _recipe.ingredient + "_normal";
+        if (global.farming_rules.crops[i].object_id == _recipe.ingredient)
+            return "crop_" + global.farming_rules.crops[i].product_id + "_normal";
     var source_recipe = cooking_recipe(_recipe.ingredient);
     return is_undefined(source_recipe) ? "" : cooking_output_id(source_recipe, 0);
 }
@@ -76,9 +98,9 @@ function cooking_register_items()
         var final_dish = !cooking_recipe_is_ingredient(recipe.id);
         var item_id = cooking_output_id(recipe, 0);
         global.inventory_definitions[$ item_id] = {
-            id: item_id, kind: final_dish ? "food" : "prepared", tab: "item",
-            name: recipe.steps[0].name,
-            sprite: recipe.sprite, sprite_frame: 0, colour: c_white,
+            id: item_id, object_id: recipe.id, kind: final_dish ? "food" : "prepared", tab: "item",
+            name: recipe.name,
+            sprite_frame: 0, colour: c_white,
             recipe_id: recipe.id, price: final_dish ? recipe.price : 0,
             effect_key: recipe.effect, effect_level: recipe.level,
             description: recipe.effect == " " ? recipe.name : recipe.effect + " LV" + string(recipe.level)
@@ -160,7 +182,7 @@ function cooking_match_input(_item, _station)
     for (var i = 0; i < array_length(global.cooking_recipes); i++)
     {
         var recipe = global.cooking_recipes[i];
-        if (_item.kind == "crop" && _item.base_crop_id == recipe.ingredient && recipe.steps[0].station == _station)
+        if (_item.kind == "crop" && _item.object_id == recipe.ingredient && recipe.steps[0].station == _station)
             return { recipe: recipe, step: 0 };
         if (_item.kind == "prepared" && _item.recipe_id == recipe.ingredient && recipe.steps[0].station == _station)
             return { recipe: recipe, step: 0 };
@@ -216,7 +238,7 @@ function cooking_collect(_index)
     if (_index < 0 || _index >= array_length(stations) || stations[_index].state != "ready") return false;
     var item = cooking_station_item(_index);
     if (is_undefined(item) || inventory_stack_add(item.id, 1) != 0) { cooking_notice("인벤토리가 가득 찼습니다. 칸을 비워 주세요."); return false; }
-    inventory_notify_gain(item.id, 1); codex_discover(item.id);
+    inventory_notify_gain(item.id, 1);
     global.cooking_state.stations[_index] = cooking_empty_station(stations[_index].kind);
     return true;
 }
@@ -291,7 +313,8 @@ function cooking_restore(_saved)
     if (!is_struct(_saved)) return;
     var state = global.cooking_state;
     var order = variable_struct_get(_saved, "order_recipe");
-    if (is_string(order) && !is_undefined(cooking_recipe(order)))
+    if (is_string(order)) order = cooking_recipe_object_id(order);
+    if (is_numeric(order) && !is_undefined(cooking_recipe(order)))
     {
         state.order_recipe = order;
         state.phase = variable_struct_get(_saved, "phase");
@@ -328,8 +351,8 @@ function cooking_restore(_saved)
         var recipe=cooking_recipe(saved_recipe_id);
         if(is_undefined(recipe))continue;
         // Each recipe now has one step. Map old multi-step jobs to the new standalone prep recipes.
-        if (recipe.id == "heartbeet_salad" && state.stations[i].kind == "board") recipe = cooking_recipe("heartbeet_chopped");
-        else if (recipe.id == "icecarrot_pancake" && state.stations[i].kind == "board") recipe = cooking_recipe("icecarrot_shredded");
+        if (recipe.id == obj_HeartBeet_salad && state.stations[i].kind == "board") recipe = cooking_recipe(obj_HeartBeet_chopped);
+        else if (recipe.id == obj_icecarrot_pancake && state.stations[i].kind == "board") recipe = cooking_recipe(obj_icecarrot_shredded);
         if (is_undefined(recipe) || recipe.steps[0].station != state.stations[i].kind) continue;
         var status=variable_struct_get(job,"state");if(status!="cooking"&&status!="ready")continue;
         var elapsed=variable_struct_get(job,"elapsed");if(!is_numeric(elapsed))elapsed=0;

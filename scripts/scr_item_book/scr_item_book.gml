@@ -291,8 +291,7 @@ function scr_item_book_draw(_controller)
             var is_selected = visible_index < array_length(entries)
                 && visible_index == _controller.item_book_selected_index;
             var item = _controller.item_book_entries[entries[visible_index]];
-            var found_high_quality = variable_struct_exists(item, "high_quality_id")
-                && codex_was_found(item.high_quality_id);
+            var found_high_quality = codex_was_high_quality(item.id);
             var frame = found_high_quality ? (is_selected ? 3 : 2) : (is_selected ? 1 : 0);
             draw_sprite_ext(spr_item_book_frame, frame,
                 left + (cell_x + 16) * scale, top + (cell_y + 32) * scale,
@@ -300,7 +299,7 @@ function scr_item_book_draw(_controller)
             var found = codex_was_found(item.id);
             if (item.sprite != noone && sprite_exists(item.sprite))
             {
-                var crop_sprite_frame = found ? 0 : 1;
+                var crop_sprite_frame = !found ? 2 : (found_high_quality ? 1 : 0);
                 crop_sprite_frame = clamp(crop_sprite_frame, 0, sprite_get_number(item.sprite) - 1);
                 draw_sprite_ext(item.sprite, crop_sprite_frame,
                     left + (cell_x + 16) * scale, top + (cell_y + 16) * scale,
@@ -337,7 +336,7 @@ function scr_item_book_draw(_controller)
 
         if (selected_entry.sprite != noone && sprite_exists(selected_entry.sprite))
         {
-            var detail_frame = selected_found ? 0 : 1;
+            var detail_frame = !selected_found ? 2 : (codex_was_high_quality(selected_entry.id) ? 1 : 0);
             detail_frame = clamp(detail_frame, 0, sprite_get_number(selected_entry.sprite) - 1);
             draw_sprite_ext(selected_entry.sprite, detail_frame,
                 left + 439 * scale, top + 144 * scale,
@@ -350,19 +349,26 @@ function scr_item_book_draw(_controller)
         for (var effect_index = 0; effect_index < effect_count; effect_index++)
         {
             var effect_y = 110 + effect_index * 35;
-            draw_sprite_ext(spr_item_book_effect_frame, 0,
-                left + 513 * scale, top + effect_y * scale,
-                scale, scale, 0, c_white, 1);
-
             var effect = effects[effect_index];
-            if (is_struct(effect) && variable_struct_exists(effect, "sprite")
-                && effect.sprite != noone && sprite_exists(effect.sprite))
+            var effect_sprite = codex_effect_sprite(effect);
+            if (effect_sprite != noone && sprite_exists(effect_sprite))
             {
-                var effect_scale = min(24 / sprite_get_width(effect.sprite),
-                    24 / sprite_get_height(effect.sprite)) * scale;
-                draw_sprite_ext(effect.sprite, 0,
+                var effect_width = sprite_get_width(spr_item_book_effect_frame) * scale;
+                var effect_height = sprite_get_height(spr_item_book_effect_frame) * scale;
+                var effect_scale_x = effect_width / sprite_get_width(effect_sprite);
+                var effect_scale_y = effect_height / sprite_get_height(effect_sprite);
+                draw_sprite_ext(effect_sprite, 0,
                     left + 513 * scale, top + effect_y * scale,
-                    effect_scale, effect_scale, 0, c_white, 1);
+                    effect_scale_x, effect_scale_y, 0, c_white, 1);
+                if (!selected_found)
+                {
+                    var effect_left = left + 513 * scale - effect_width * 0.5;
+                    var effect_top = top + effect_y * scale - effect_height * 0.5;
+                    draw_set_color(c_black);
+                    draw_rectangle(effect_left, effect_top, effect_left + effect_width,
+                        effect_top + effect_height, false);
+                    draw_set_color(c_white);
+                }
             }
             else
             {
@@ -376,6 +382,9 @@ function scr_item_book_draw(_controller)
                 draw_text_transformed(left + 513 * scale, top + effect_y * scale,
                     effect_label, 0.7 * scale, 0.7 * scale, 0);
             }
+            draw_sprite_ext(spr_item_book_effect_frame, 0,
+                left + 513 * scale, top + effect_y * scale,
+                scale, scale, 0, c_white, 1);
         }
 
         // Description, effects, and cultivated land are separate catalogue fields.

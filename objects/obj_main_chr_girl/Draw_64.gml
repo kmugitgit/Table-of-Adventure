@@ -84,7 +84,7 @@ for (var row = 0; row < layout.rows; row++)
         {
             var item = inventory_get_item(slot.id);
             if (hovered) hovered_item = item;
-            codex_draw_item(item, [left + 3, top + 3, right - 3, bottom - 3], true);
+            codex_draw_item(item, [left + 3, top + 3, right - 3, bottom - 3], true, true);
             if (item.kind == "tool" && item.tool_kind == "can")
             {
                 var amount = inventory_water_amount(slot);
