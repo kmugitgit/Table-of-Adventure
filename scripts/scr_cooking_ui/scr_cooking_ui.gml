@@ -40,12 +40,12 @@ function cooking_ui_station_bounds(_ui,_index)
 {
     var entry=scr_cooking_station_entries()[_index];
     var left=48+entry.display_order*224-_ui.counter_scroll;
-    return [left,98,left+176,218];
+    return [left,118,left+176,238];
 }
 
 function cooking_ui_station_at(_ui,_point)
 {
-    if(!cooking_ui_hit(_point,[24,94,936,222]))return -1;
+    if(!cooking_ui_hit(_point,[24,114,936,242]))return -1;
     for(var i=0;i<5;i++)if(cooking_ui_hit(_point,cooking_ui_station_bounds(_ui,i)))return i;
     return -1;
 }
@@ -63,11 +63,13 @@ function cooking_ui_button(_bounds,_label,_enabled,_point)
 }
 
 // Appliance imagery comes only from user-editable sprite resources.
-function cooking_ui_draw_device(_entry,_cx,_cy)
+function cooking_ui_draw_device(_entry,_cx,_cy,_frame_override=-1)
 {
     if(!sprite_exists(_entry.sprite))return;
     var scale=min(148/sprite_get_width(_entry.sprite),56/sprite_get_height(_entry.sprite))*_entry.image_scale;
-    draw_sprite_ext(_entry.sprite,_entry.sprite_frame,
+    var frame=_frame_override>=0?_frame_override:_entry.sprite_frame;
+    frame=clamp(frame,0,sprite_get_number(_entry.sprite)-1);
+    draw_sprite_ext(_entry.sprite,frame,
         _cx+_entry.offset_x+(sprite_get_xoffset(_entry.sprite)-sprite_get_width(_entry.sprite)/2)*scale,
         _cy+_entry.offset_y+(sprite_get_yoffset(_entry.sprite)-sprite_get_height(_entry.sprite)/2)*scale,
         scale,scale,0,c_white,1);
@@ -76,22 +78,23 @@ function cooking_ui_draw_device(_entry,_cx,_cy)
 function cooking_ui_station(_ui,_index,_point)
 {
     var station=global.cooking_state.stations[_index];var bounds=cooking_ui_station_bounds(_ui,_index);
-    var hover=!cooking_input_blocked()&&cooking_ui_station_at(_ui,_point)==_index;
-    draw_set_color(hover?make_color_rgb(178,135,72):make_color_rgb(110,76,45));draw_rectangle(bounds[0],bounds[1],bounds[2],bounds[3],false);
-    draw_set_color(make_color_rgb(119,84,49));draw_rectangle(bounds[0]+3,bounds[1]+3,bounds[2]-3,bounds[3]-3,false);
     var entries=scr_cooking_station_entries();draw_set_halign(fa_center);draw_set_valign(fa_middle);
-    draw_set_color(make_color_rgb(247,222,176));draw_text((bounds[0]+bounds[2])/2,86,entries[_index].name);
-    var cx=(bounds[0]+bounds[2])/2;cooking_ui_draw_device(entries[_index],cx,152);
+    draw_set_color(make_color_rgb(247,222,176));draw_text((bounds[0]+bounds[2])/2,106,entries[_index].name);
+    var cx=(bounds[0]+bounds[2])/2;
+    var device_frame=entries[_index].sprite_frame;
+    if(entries[_index].id=="board")
+        device_frame=station.state=="cooking"?floor(current_time/100) mod 9:6;
+    cooking_ui_draw_device(entries[_index],cx,172,device_frame);
     if(station.state!="empty")
     {
         var recipe=cooking_recipe(station.recipe_id);var item=cooking_station_item(_index);
         if(!(is_struct(_ui.drag)&&_ui.drag.moved&&_ui.drag.kind=="station"&&_ui.drag.source==_index))
-            codex_draw_item(item,[cx-40,120,cx+40,200],true);
+            codex_draw_item(item,[cx-40,130,cx+40,210],true);
         var fraction=station.state=="ready"?1:station.elapsed/recipe.steps[station.step].seconds;
-        draw_set_color(make_color_rgb(251,224,178));draw_set_halign(fa_center);draw_set_valign(fa_middle);draw_text(cx,112,item.name);
-        draw_set_color(make_color_rgb(43,31,24));draw_rectangle(bounds[0]+12,201,bounds[2]-12,208,false);
+        draw_set_color(make_color_rgb(251,224,178));draw_set_halign(fa_center);draw_set_valign(fa_middle);draw_text(cx,221,item.name);
+        draw_set_color(make_color_rgb(43,31,24));draw_rectangle(bounds[0]+12,231,bounds[2]-12,238,false);
         draw_set_color(station.state=="ready"?make_color_rgb(113,164,89):make_color_rgb(227,185,87));
-        draw_rectangle(bounds[0]+13,202,bounds[0]+13+(bounds[2]-bounds[0]-26)*fraction,207,false);
+        draw_rectangle(bounds[0]+13,232,bounds[0]+13+(bounds[2]-bounds[0]-26)*fraction,237,false);
     }
 }
 
@@ -123,18 +126,18 @@ function cooking_ui_draw(_ui)
         draw_set_halign(fa_left);draw_set_valign(fa_middle);draw_set_color(make_color_rgb(245,220,173));draw_text(300,36,"주방");
         cooking_ui_button([148,20,284,50],"식당으로",true,point);
         var table_bottom=520;
-        draw_set_color(make_color_rgb(111,77,45));draw_rectangle(16,230,944,table_bottom,false);
-        draw_set_color(make_color_rgb(151,106,62));draw_rectangle(20,234,940,table_bottom-4,true);
+        draw_set_color(make_color_rgb(111,77,45));draw_rectangle(16,110,944,table_bottom,false);
+        draw_set_color(make_color_rgb(151,106,62));draw_rectangle(20,114,940,table_bottom-4,true);
         draw_set_color(make_color_rgb(91,62,38));
         for(var grain=0;grain<11;grain++){
             var gx=grain*120-_ui.counter_scroll;
-            if(gx>20&&gx<940)draw_line(gx,235,gx,table_bottom-5);
+            if(gx>20&&gx<940)draw_line(gx,115,gx,table_bottom-5);
         }
-        draw_set_halign(fa_left);draw_set_valign(fa_top);draw_set_color(make_color_rgb(238,210,163));
-        draw_text(30,240,"R 도감 · 작업대의 빈 곳을 잡고 좌우로 드래그");
-        var scissor=gpu_get_scissor();gpu_set_scissor(24,76,912,146);
+        draw_set_halign(fa_left);draw_set_valign(fa_bottom);draw_set_color(make_color_rgb(238,210,163));
+        draw_text_transformed(30,510,"테이블을 잡고 좌우로 드래그",0.78,0.78,0);
+        var scissor=gpu_get_scissor();gpu_set_scissor(24,70,912,240);
         for(var i=0;i<array_length(state.stations);i++)cooking_ui_station(_ui,i,point);
-        gpu_set_scissor(24,262,912,table_bottom-262);
+        gpu_set_scissor(24,280,912,table_bottom-280);
         for(var i=0;i<array_length(state.table_items);i++){
             if(is_struct(_ui.drag)&&_ui.drag.kind=="table"&&_ui.drag.source==i
                 &&(_ui.drag.moved||mouse_check_button(mb_left)))continue;
@@ -143,9 +146,6 @@ function cooking_ui_draw(_ui)
 
         }
         gpu_set_scissor(scissor);
-        var thumb=912*912/1144;var offset=(912-thumb)*_ui.counter_scroll/232;
-        draw_set_color(make_color_rgb(50,35,24));draw_rectangle(24,224,936,228,false);
-        draw_set_color(make_color_rgb(191,145,78));draw_rectangle(24+offset,224,24+offset+thumb,228,false);
     }
     if(state.notice_remaining>0)
     {
@@ -180,16 +180,28 @@ function cooking_ui_inventory_contains(_point)
     var bottom=(inv.y+inv.height*inv.scale-outer.top)/outer.scale;
     return cooking_ui_hit(_point,[left,top,right,bottom]);
 }
+function cooking_ui_hotbar_scrollbar_bounds()
+{
+    var hero=instance_find(obj_main_chr_girl,0);
+    if(hero==noone||hero.inventory_open)return [0,0,0,0];
+    var outer=cooking_ui_layout();var inv=hero.inventory_layout();
+    var gui_left=outer.left+24*outer.scale;
+    var gui_right=outer.left+936*outer.scale;
+    var gui_top=inv.y+(inv.height+2)*inv.scale;
+    var gui_bottom=gui_top+5*inv.scale;
+    return [(gui_left-outer.left)/outer.scale,(gui_top-outer.top)/outer.scale,
+        (gui_right-outer.left)/outer.scale,(gui_bottom-outer.top)/outer.scale];
+}
 function cooking_ui_table_at(_ui,_point)
 {
-    if(!cooking_ui_hit(_point,[24,262,936,512])||cooking_ui_inventory_contains(_point))return -1;
+    if(!cooking_ui_hit(_point,[24,280,936,512])||cooking_ui_inventory_contains(_point))return -1;
     var items=global.cooking_state.table_items;
     for(var i=array_length(items)-1;i>=0;i--)if(point_distance(_point.x+_ui.counter_scroll,_point.y,items[i].x,items[i].y)<50)return i;
     return -1;
 }
 function cooking_ui_table_drop(_ui,_drag,_point)
 {
-    if(!cooking_ui_hit(_point,[24,262,936,512])||cooking_ui_inventory_contains(_point))return false;
+    if(!cooking_ui_hit(_point,[24,280,936,512])||cooking_ui_inventory_contains(_point))return false;
     var item=inventory_get_item(_drag.id);if(is_undefined(item)||!array_contains(["crop","prepared","food"],item.kind))return false;
     var offset_x=variable_struct_exists(_drag,"offset_x")?_drag.offset_x:0;
     var offset_y=variable_struct_exists(_drag,"offset_y")?_drag.offset_y:0;
@@ -264,7 +276,8 @@ function cooking_ui_step(_ui)
     // The player inventory picks up an item on mouse press. Place it only on release,
     // otherwise that same click is seen by both Step events and immediately cancels pickup.
     if(room==rm_kitchen&&mouse_check_button_released(mb_left)&&is_struct(hero.inventory_held_stack)
-        &&cooking_ui_inventory_at(point)==-1&&!cooking_ui_inventory_contains(point)){
+        &&cooking_ui_inventory_at(point)==-1&&!cooking_ui_inventory_contains(point)
+        &&!cooking_ui_hit(point,cooking_ui_hotbar_scrollbar_bounds())){
         _ui.drag=undefined;_ui.table_drag=undefined;
         var held=hero.inventory_held_stack;var held_item=inventory_get_item(held.id);
         if(!is_undefined(held_item)&&array_contains(["crop","prepared","food"],held_item.kind)){
@@ -279,7 +292,7 @@ function cooking_ui_step(_ui)
             }
             if(array_length(state.table_items)>=60){cooking_notice("작업대가 가득 찼습니다.");return;}
             var place_x=point.x+_ui.counter_scroll;var place_y=point.y;
-            if(!cooking_ui_hit(point,[24,262,936,512])){place_x=480+_ui.counter_scroll;place_y=390;}
+            if(!cooking_ui_hit(point,[24,280,936,512])){place_x=480+_ui.counter_scroll;place_y=390;}
             array_push(state.table_items,{id:held.id,x:clamp(place_x,48,1096),y:clamp(place_y,310,472)});
             _ui.table_selected=array_length(state.table_items)-1;
             held.quantity--;if(held.quantity<=0){hero.inventory_held_stack=undefined;hero.inventory_held_source=-1;}
@@ -295,7 +308,10 @@ function cooking_ui_step(_ui)
         return;
     }
     if(is_struct(_ui.table_drag)){
-        _ui.counter_scroll=clamp(_ui.table_drag.scroll+_ui.table_drag.x-point.x,0,232);
+        var drag_delta=_ui.table_drag.x-point.x;
+        if(variable_struct_exists(_ui.table_drag,"kind")&&_ui.table_drag.kind=="scrollbar")
+            drag_delta*=232/max(1,_ui.table_drag.travel);
+        _ui.counter_scroll=clamp(_ui.table_drag.scroll+drag_delta,0,232);
         if(mouse_check_button_released(mb_left))_ui.table_drag=undefined;
         return;
     }
@@ -306,6 +322,14 @@ function cooking_ui_step(_ui)
             if(state.accepted&&state.phase=="accepted"&&cooking_ui_hit(point,[768,380,936,414])){with(hero)inventory_close();room_goto(rm_kitchen);return;}
         }else if(room==rm_kitchen&&cooking_ui_hit(point,[148,20,284,50])){with(hero)inventory_close();room_goto(rm_restaurant);return;}
         if(room==rm_kitchen&&!is_struct(hero.inventory_held_stack)){
+            if(!hero.inventory_open){
+                var hotbar_bar=cooking_ui_hotbar_scrollbar_bounds();
+                if(cooking_ui_hit(point,hotbar_bar)){
+                    _ui.table_drag={kind:"scrollbar",x:point.x,scroll:_ui.counter_scroll,
+                        travel:(hotbar_bar[2]-hotbar_bar[0])*(1-912/1144)};
+                    return;
+                }
+            }
             var station=cooking_ui_station_at(_ui,point);var table_index=cooking_ui_table_at(_ui,point);
             if(station!=-1&&state.stations[station].state!="empty"){
                 var station_job=state.stations[station];var station_item=cooking_station_item(station);
@@ -329,7 +353,7 @@ function cooking_ui_step(_ui)
                 _ui.drag={kind:"table",source:table_index,id:held_table_item.id,start_x:point.x,start_y:point.y,moved:false,
                     offset_x:held_table_item.x-(point.x+_ui.counter_scroll),offset_y:held_table_item.y-point.y};
             }
-            else if(cooking_ui_hit(point,[24,230,936,512])&&!cooking_ui_inventory_contains(point))_ui.table_drag={x:point.x,scroll:_ui.counter_scroll};
+            else if(cooking_ui_hit(point,[24,280,936,512])&&!cooking_ui_inventory_contains(point))_ui.table_drag={x:point.x,scroll:_ui.counter_scroll};
         }
     }
     if(is_struct(_ui.drag)){

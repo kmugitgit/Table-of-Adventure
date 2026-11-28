@@ -12,6 +12,15 @@ if(surface_exists(surface)&&surface_set_target(surface))
   if(hero!=noone&&surface_exists(hero.inventory_surface)){
    var inv=hero.inventory_layout();
    draw_surface_part_ext(hero.inventory_surface,0,0,inv.width,inv.height,inv.x,inv.y,inv.scale,inv.scale,c_white,1);
+   if(!hero.inventory_open){
+    var bar=cooking_ui_hotbar_scrollbar_bounds();
+    var bar_left=layout.left+bar[0]*layout.scale;var bar_top=layout.top+bar[1]*layout.scale;
+    var bar_right=layout.left+bar[2]*layout.scale;var bar_bottom=layout.top+bar[3]*layout.scale;
+    var bar_width=bar_right-bar_left;var thumb_width=bar_width*(912/1144);
+    var thumb_left=bar_left+(bar_width-thumb_width)*counter_scroll/232;
+    draw_set_color(make_color_rgb(50,35,24));draw_rectangle(bar_left,bar_top,bar_right,bar_bottom,false);
+    draw_set_color(make_color_rgb(191,145,78));draw_rectangle(thumb_left,bar_top,thumb_left+thumb_width,bar_bottom,false);
+   }
    var inventory_pointer=cooking_ui_pointer();var hovered_index=cooking_ui_inventory_at(inventory_pointer);
    var active_item=undefined;
    if(is_struct(hero.inventory_held_stack))active_item=inventory_get_item(hero.inventory_held_stack.id);

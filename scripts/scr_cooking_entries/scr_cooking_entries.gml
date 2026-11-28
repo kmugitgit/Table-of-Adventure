@@ -153,9 +153,9 @@ function scr_cooking_station_entries()
             id: "board",
             name: "도마",
             sprite: spr_kitchen_board,
-            sprite_frame: 0,
+            sprite_frame: 6,
             display_order: 1,
-            image_scale: 1,
+            image_scale: 3,
             offset_x: 0,
             offset_y: 0
         },
@@ -165,7 +165,7 @@ function scr_cooking_station_entries()
             sprite: spr_kitchen_pot,
             sprite_frame: 0,
             display_order: 4,
-            image_scale: 1,
+            image_scale: 3,
             offset_x: 0,
             offset_y: 0
         },
@@ -175,7 +175,7 @@ function scr_cooking_station_entries()
             sprite: spr_kitchen_mortar,
             sprite_frame: 0,
             display_order: 2,
-            image_scale: 1,
+            image_scale: 3,
             offset_x: 0,
             offset_y: 0
         },
@@ -185,7 +185,7 @@ function scr_cooking_station_entries()
             sprite: spr_kitchen_pan,
             sprite_frame: 0,
             display_order: 3,
-            image_scale: 1,
+            image_scale: 3,
             offset_x: 0,
             offset_y: 0
         },
@@ -195,7 +195,7 @@ function scr_cooking_station_entries()
             sprite: spr_kitchen_plate,
             sprite_frame: 0,
             display_order: 0,
-            image_scale: 1,
+            image_scale: 3,
             offset_x: 0,
             offset_y: 0
         }

@@ -115,9 +115,10 @@ inventory_layout = function()
     var surface_height = inventory_row_top(inventory_rows - 1, inventory_grid_top)
         + inventory_slot_size + inventory_padding;
     scale = min(scale, gui_width / width, gui_height / height);
+    var kitchen_hotbar_offset = room == rm_kitchen && !inventory_open ? 12 * scale : 0;
     return {
         x: round((gui_width - width * scale) * 0.5),
-        y: round(gui_height - height * scale),
+        y: round(gui_height - height * scale - kitchen_hotbar_offset),
         scale: scale,
         width: width,
         height: height,
